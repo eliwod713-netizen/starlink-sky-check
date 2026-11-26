@@ -54,11 +54,18 @@
   .note{font-size:12.5px;color:var(--muted)}
   .err{display:none;background:color-mix(in srgb, var(--bad) 12%, var(--surface));border:1px solid var(--bad);color:var(--ink);border-radius:12px;padding:12px 14px;font-size:14px;margin:0 0 14px}
   .err.show{display:block}
-  .darkalert{display:none;align-items:flex-start;gap:10px;background:color-mix(in srgb, var(--warn) 16%, var(--surface));border:1.5px solid var(--warn);color:var(--ink);border-radius:12px;padding:12px 14px;font-size:14px;margin:0 0 14px}
-  .darkalert.show{display:flex}
-  .darkalert .ic{font-size:20px;line-height:1.3;flex:0 0 auto}
-  .darkalert b{color:var(--warn)}
-  .darkalert p{margin:0}
+  .darkalert,.movewarn{display:none;align-items:flex-start;gap:10px;background:color-mix(in srgb, var(--warn) 16%, var(--surface));border:1.5px solid var(--warn);color:var(--ink);border-radius:12px;padding:12px 14px;font-size:14px;margin:0 0 14px}
+  .darkalert.show,.movewarn.show{display:flex}
+  .darkalert .ic,.movewarn .ic{font-size:20px;line-height:1.3;flex:0 0 auto}
+  .darkalert b,.movewarn b{color:var(--warn)}
+  .darkalert p,.movewarn p{margin:0}
+  .staynote{display:flex;align-items:flex-start;gap:10px;background:color-mix(in srgb, var(--warn) 14%, var(--surface));border:1.5px solid var(--warn);border-radius:12px;padding:12px 14px;font-size:14px;margin:0 0 14px}
+  .staynote .ic{font-size:20px;line-height:1.3;flex:0 0 auto}
+  .staynote b{color:var(--warn)}
+  .staynote p{margin:0}
+  .recbadge{display:inline-block;border-radius:999px;padding:2px 12px;font-size:12.5px;font-weight:700;background:var(--chip);color:var(--muted);vertical-align:1px}
+  .recbadge.on{background:var(--ok);color:#fff}
+  .recbadge.off{background:var(--bad);color:#fff}
   .framewarn{background:color-mix(in srgb, var(--warn) 14%, var(--surface));border:1px solid var(--warn);border-radius:12px;padding:10px 12px;font-size:14px;margin:0 0 12px}
   .framewarn b{color:var(--warn)}
   .hidden{display:none !important}
@@ -145,11 +152,16 @@
     <h1>Starlink 見通しチェック</h1>
     <p class="lead">設置したい場所でスマホを空に向け、ゆっくり一周させてスキャンするだけ。上空がどれだけ開けていて、建物や木などの障害物がどれくらいあるかをその場で判定します。旧公式アプリの「障害物チェック」の代替として作ったWeb版です。</p>
 
+    <div class="staynote" role="note">
+      <span class="ic" aria-hidden="true">⚠️</span>
+      <p><b>撮影のコツ：その場から動かないでください。</b><br>アンテナを設置する予定の場所に立ち、できるだけ動かずに、その場でゆっくり回転して撮影してください。歩き回りながら撮ると、見る位置がずれて判定がずれる原因になります。スキャン中はGPSで測定点を固定し、測定点から離れたり歩いたりしている間は自動記録が一時停止します。</p>
+    </div>
+
     <div class="card">
       <h2>やり方（5ステップ）</h2>
       <ol class="steps">
         <li><span class="num">1</span><p>アンテナを置きたい場所に立つ<small>屋根の上など、実際に設置する高さ・位置が理想です。この画面で概要と操作の流れを確認します</small></p></li>
-        <li><span class="num">2</span><p>カメラとモーションセンサーを許可する<small>次の画面で許可を取ります。映像とデータはこの端末の中だけで処理され、外部に送信されません</small></p></li>
+        <li><span class="num">2</span><p>カメラとモーションセンサーを許可する<small>次の画面で許可を取ります。映像とデータはこの端末の中だけで処理され、外部に送信されません。位置情報（GPS）は任意で、スキャン開始地点を「測定点」として固定するために使います</small></p></li>
         <li><span class="num">3</span><p>北を向いて、コンパス（方位）を補正する<small>北を向いた状態で方位の表示を合わせます。初期値として+10°の補正が入っています</small></p></li>
         <li><span class="num">4</span><p>スマホを空に向けて、ゆっくり全方向をなめるようにスキャンする<small>真上から地平線近くまで、方位360°をまんべんなく。目安は1〜2分です。カメラ映像上で灰色の部分が未スキャン、映像が見える部分がスキャン済みです。水平より下を向いている間は記録されません</small></p></li>
         <li><span class="num">5</span><p>スカイマップと判定を確認する<small>高度25°以上の範囲がStarlinkの通信に必要な視野の目安です</small></p></li>
@@ -169,7 +181,7 @@
   <section id="screen-perm" class="hidden">
     <ol class="flowsteps" data-cur="2"><li><span class="dot">1</span>概要</li><li><span class="dot">2</span>権限取得</li><li><span class="dot">3</span>方位補正</li><li><span class="dot">4</span>スキャン</li><li><span class="dot">5</span>結果</li></ol>
     <h1 style="font-size:20px">権限の取得</h1>
-    <p class="lead">スキャンに使うカメラとモーションセンサーの許可を取ります。どちらか一方だけでも次へ進めます。</p>
+    <p class="lead">スキャンに使うカメラとモーションセンサーの許可を取ります。どちらか一方だけでも次へ進めます。位置情報（GPS）は任意です（測定点の固定に使います）。</p>
 
     <div class="err" id="startErr" role="alert"></div>
 
@@ -178,9 +190,11 @@
       <div class="stack">
         <button class="btn" id="btnCam">📷 カメラを許可する <span class="st" id="stCam">未許可</span></button>
         <button class="btn" id="btnOri">🧭 モーションセンサーを許可する <span class="st" id="stOri">未許可</span></button>
+        <button class="btn" id="btnGps">📍 位置情報（GPS）を許可する（任意） <span class="st" id="stGps">未許可</span></button>
         <button class="btn primary" id="btnStart" disabled>次へ：方位の補正へ</button>
       </div>
       <p class="note" style="margin:10px 0 0">※ このページはHTTPSで開いてください（カメラとセンサーはHTTPS必須です）。センサーが使えない端末では、カメラ映像だけでもスキャンでき、手動ボタンで記録できます。</p>
+      <p class="note" style="margin:6px 0 0">位置情報は、スキャンを始めた場所を「測定点」として固定し、そこから離れたら自動記録を一時停止するために使います。許可しなくてもスキャンはできます（その場合は測定点の固定なしで記録します）。位置情報もこの端末の中だけで使われ、外部に送信されません。</p>
     </div>
 
     <div class="card hidden" id="iosHelp">
@@ -247,6 +261,10 @@
       <span class="ic" aria-hidden="true">🌙</span>
       <p><b>暗すぎます：この明るさでは判定できません。</b><br>夜間や暗い場所では空も暗く映るため、実際は開けていても「障害物」と誤判定され、結果が実際より悪く出ます。明るい時間帯に測り直してください。このまま続けると記録は残りますが、判定は信用しないでください。</p>
     </div>
+    <div class="movewarn" id="moveWarn" role="alert">
+      <span class="ic" aria-hidden="true">📍</span>
+      <p id="moveWarnText"><b>自動記録を一時停止しています。</b></p>
+    </div>
 
     <div class="camwrap" id="camwrap">
       <video id="video" playsinline muted autoplay></video>
@@ -258,6 +276,7 @@
         <span class="pill">高度 <b id="hudEl">—</b></span>
         <span class="pill">向いている方角 <b id="hudDir">—</b></span>
         <span class="pill">補正 <b class="calValText">+10°</b></span>
+        <span class="pill">測定点まで <b id="hudAnchor">—</b></span>
       </div>
       <div class="reticle"></div>
       <div class="guide" id="guide">スマホを空に向けて、<b>ゆっくり</b>一周させてください。映像の上の灰色が未スキャンの範囲です。灰色が消えるように、真上 → 周囲の順に動かすのがコツです。</div>
@@ -275,6 +294,15 @@
         <button class="btn obs" id="btnMarkObs">🚧 障害物として記録</button>
         <button class="btn sky" id="btnMarkSky">☀️ 空として記録</button>
       </div>
+    </div>
+
+    <div class="card">
+      <h2>測定点（GPSアンカー）</h2>
+      <p style="margin:0 0 6px;font-size:14.5px">記録状態：<span class="recbadge on" id="recBadge">記録中</span></p>
+      <p class="note" style="margin:0" id="anchorLine1">測定点：未設定（GPSの位置を待っています）</p>
+      <p class="note" style="margin:4px 0 0" id="anchorLine2">スキャンを始めると、その場のGPS位置が「測定点」として固定されます。測定点から離れると自動記録が一時停止し、歩行を検出した間も止まります。</p>
+      <button type="button" class="btn" id="btnReanchor" style="margin-top:10px" disabled>測定点を今の位置に設定し直す</button>
+      <p class="note" style="margin:10px 0 0">GPSの誤差は屋外でも数m〜十数mあるため、検出できるのは「大きく歩き回る」動きが中心です。1〜2mのずれは拾えません。GPSが取れない・精度が悪い場合も、その旨を表示したうえでスキャン自体は続けられます。測定点から離れた状態で手動記録した分は、通常の記録と分けて保持され、結果画面で判定に含めるかどうかを選べます。</p>
     </div>
 
     <div class="card">
@@ -336,6 +364,8 @@
         <div class="stat"><div class="v" id="statObs">—</div><div class="k">必要範囲内の障害物<br>（スキャン済み部分のうち）</div></div>
       </div>
       <p class="dirlist" id="dirSummary"></p>
+      <p class="note hidden" id="farNote" style="margin:10px 0 0"></p>
+      <button type="button" class="btn hidden" id="btnFarToggle" style="margin-top:10px">範囲外の記録も含めて表示する</button>
     </div>
 
     <div class="card">
@@ -373,15 +403,26 @@
 var AZ_BINS=72, EL_BINS=18; // 5deg each
 var skyV=new Float32Array(AZ_BINS*EL_BINS);
 var obsV=new Float32Array(AZ_BINS*EL_BINS);
+/* Samples recorded while away from the GPS anchor point are kept in separate
+   arrays so they can be excluded from (or folded back into) the verdict on
+   the result screen. includeFar=false is the default: far data is invalid. */
+var farSkyV=new Float32Array(AZ_BINS*EL_BINS);
+var farObsV=new Float32Array(AZ_BINS*EL_BINS);
+var includeFar=false;
 function idx(az,el){ 
   var a=((Math.floor(az/5)%AZ_BINS)+AZ_BINS)%AZ_BINS;
   var e=Math.floor(el/5); if(e<0)e=0; if(e>=EL_BINS)e=EL_BINS-1;
   return a*EL_BINS+e;
 }
 function cellState(i){
-  var s=skyV[i],o=obsV[i],t=s+o;
+  var s=skyV[i]+(includeFar?farSkyV[i]:0), o=obsV[i]+(includeFar?farObsV[i]:0), t=s+o;
   if(t<2) return 0; // unknown
   return (o/t>0.5)?2:1; // 1 sky, 2 obstructed
+}
+function countFarCells(){
+  var n=0;
+  for(var i=0;i<farSkyV.length;i++){ if(farSkyV[i]+farObsV[i]>=2) n++; }
+  return n;
 }
 function computeStats(){
   var total=0,scanned=0,obs=0;
@@ -564,6 +605,7 @@ function isSkyPixel(r,g,b){
 function sampleFrame(){
   if(!camOK || heading===null || elevation===null) return;
   if(elevationSigned!==null && elevationSigned<=0) return; // below the horizon: out of scan scope
+  if(recordPaused()) return; // away from the anchor point, GPS fix stale, or walking: auto-recording paused
   var w=sCan.width,h=sCan.height;
   try{ sCtx.drawImage(video,0,0,w,h); }catch(err){ return; }
   var data;
@@ -590,6 +632,7 @@ function sampleFrame(){
 function scanTick(){
   sampleFrame();
   if(camOK){ lumTicks++; if(darkNow) darkTicks++; } // share of this scan spent too dark (for the result-screen caution)
+  updateAnchorState(); // re-evaluates distance / fix staleness and refreshes the anchor UI
   refreshScanUI();
 }
 function stampManual(isObs){
@@ -606,13 +649,187 @@ function stampManual(isObs){
     for(var de=-FOV_V/2; de<=FOV_V/2; de+=5){
       var el=elevation+de; if(el<0||el>90) continue;
       var i=idx(heading+da, el);
-      if(isObs){ obsV[i]+=30; } else { skyV[i]+=30; }
+      // manual stamps made while away from the anchor point are quarantined
+      // in the far arrays instead of polluting the main measurement
+      if(anchorStatus==="far"){ if(isObs){ farObsV[i]+=30; } else { farSkyV[i]+=30; } }
+      else if(isObs){ obsV[i]+=30; } else { skyV[i]+=30; }
     }
   }
   var cw=document.getElementById("camwrap");
   cw.classList.remove("flash"); void cw.offsetWidth; cw.classList.add("flash");
   refreshScanUI();
 }
+
+/* ---------- Position provider ----------
+   Position fixes and motion state come from a provider object so the
+   implementation can be swapped later without touching the scan logic:
+   today it is GPS (geolocation) + accelerometer walking detection; a future
+   native build can substitute a VIO implementation (ARCore/ARKit spatial
+   anchors) behind the same interface.
+   Interface:
+     start(onFix, onMotionState, onError)
+       onFix({lat, lon, accuracy, t})  - called for every position fix
+       onMotionState({walking})        - called when walking state changes
+       onError(err)                    - err.code: 1 = permission denied,
+                                         -1 = position not supported
+     stop()                            - stop all tracking
+     kind                              - implementation label
+*/
+function createPositionProvider(){
+  // GPS + motion implementation (Web). To go native, replace this factory's
+  // body with a VIO-backed implementation exposing the same interface.
+  var watchId=null, motionHandler=null, fixCb=null, motionCb=null;
+  var samples=[], walking=false, stillSince=null;
+  function emitMotion(){ if(motionCb) motionCb({walking:walking}); }
+  function onMotion(e){
+    var acc=e.accelerationIncludingGravity;
+    if(!acc || (acc.x===null && acc.y===null && acc.z===null)) return;
+    var x=acc.x||0, y=acc.y||0, z=acc.z||0;
+    var m=Math.sqrt(x*x+y*y+z*z);
+    var now=Date.now();
+    samples.push({t:now,m:m});
+    while(samples.length && now-samples[0].t>2500) samples.shift();
+    if(samples.length<10) return;
+    var mean=0,i; for(i=0;i<samples.length;i++) mean+=samples[i].m; mean/=samples.length;
+    var v=0; for(i=0;i<samples.length;i++){ var d=samples[i].m-mean; v+=d*d; } v/=samples.length;
+    // The magnitude of gravity barely changes while the user only rotates in
+    // place (scanning), but oscillates with every step while walking, so the
+    // variance of |a| separates the two. Hysteresis avoids flicker.
+    if(!walking && v>1.5){ walking=true; stillSince=null; emitMotion(); }
+    else if(walking){
+      if(v<0.7){ if(stillSince===null) stillSince=now; else if(now-stillSince>1500){ walking=false; stillSince=null; emitMotion(); } }
+      else stillSince=null;
+    }
+  }
+  function cleanup(){
+    if(watchId!==null && navigator.geolocation){ try{ navigator.geolocation.clearWatch(watchId); }catch(e){} watchId=null; }
+    if(motionHandler){ window.removeEventListener("devicemotion",motionHandler); motionHandler=null; }
+  }
+  return {
+    kind:"gps+motion",
+    start:function(onFix,onMotionState,onError){
+      cleanup();
+      fixCb=onFix; motionCb=onMotionState;
+      if(typeof navigator!=="undefined" && navigator.geolocation){
+        try{
+          watchId=navigator.geolocation.watchPosition(function(p){
+            if(fixCb) fixCb({lat:p.coords.latitude, lon:p.coords.longitude, accuracy:(typeof p.coords.accuracy==="number"? p.coords.accuracy:999), t:Date.now()});
+          },function(err){ if(onError) onError(err); },{enableHighAccuracy:true, maximumAge:2000, timeout:20000});
+        }catch(e){ if(onError) onError(e); }
+      } else if(onError){ onError({code:-1,message:"geolocation unsupported"}); }
+      samples=[]; walking=false; stillSince=null;
+      motionHandler=onMotion;
+      window.addEventListener("devicemotion",motionHandler);
+    },
+    stop:function(){ cleanup(); fixCb=null; motionCb=null; }
+  };
+}
+var positionProvider=createPositionProvider();
+
+/* ---------- GPS anchor (measurement point) ----------
+   The first good fix after a scan starts is fixed as the measurement point.
+   Leaving its radius pauses auto-recording; so does detected walking or a
+   stale GPS fix. GPS being unavailable or inaccurate never blocks the scan:
+   it is reported in the UI and recording continues without an anchor. */
+var anchor=null;          // {lat,lon,accuracy,t} fixed measurement point
+var curFix=null;          // latest fix
+var bestFix=null;         // most accurate fix seen since tracking started
+var anchorStatus="idle";  // idle|acquiring|ok|far|poor|stale|unavailable
+var walkingNow=false;
+var distFromAnchor=null;
+var trackingSince=0, lastFixAt=0, gpsUnavailable=false;
+var gpsSeedFix=null;      // fix obtained from the step-2 permission button
+var ANCHOR_MIN_RADIUS=12; // m; the effective radius also grows with GPS accuracy
+function haversineM(lat1,lon1,lat2,lon2){
+  var R=6371000, p=Math.PI/180;
+  var dLa=(lat2-lat1)*p, dLo=(lon2-lon1)*p;
+  var s=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(lat1*p)*Math.cos(lat2*p)*Math.sin(dLo/2)*Math.sin(dLo/2);
+  return 2*R*Math.asin(Math.min(1,Math.sqrt(s)));
+}
+function anchorRadius(){
+  if(!anchor) return ANCHOR_MIN_RADIUS;
+  var r=ANCHOR_MIN_RADIUS;
+  if(anchor.accuracy) r=Math.max(r,anchor.accuracy);
+  if(curFix && curFix.accuracy) r=Math.max(r,curFix.accuracy);
+  return r;
+}
+function recordPaused(){ return anchorStatus==="far" || anchorStatus==="stale" || walkingNow; }
+function onAnchorFix(fix){
+  curFix=fix; lastFixAt=fix.t;
+  if(!bestFix || fix.accuracy<bestFix.accuracy) bestFix=fix;
+  if(!anchor){
+    // Fix the measurement point on the first reasonably accurate fix; if
+    // none arrives within 20 s, fall back to the best fix seen (the status
+    // then reports "poor" and the radius grows, so the scan is not blocked).
+    if(fix.accuracy<=40){ anchor=fix; }
+    else if(Date.now()-trackingSince>20000 && bestFix){ anchor=bestFix; }
+  }
+  updateAnchorState();
+}
+function onAnchorError(err){
+  // Only a hard denial / unsupported marks GPS unavailable; watchPosition
+  // also reports transient unavailable/timeout errors, which are ignored so
+  // a temporary signal loss does not kill the anchor.
+  if(err && (err.code===1 || err.code===-1)){ gpsUnavailable=true; }
+  updateAnchorState();
+}
+function updateAnchorState(){
+  if(gpsUnavailable){ anchorStatus="unavailable"; distFromAnchor=null; }
+  else if(!anchor){ anchorStatus="acquiring"; distFromAnchor=null; }
+  else if(lastFixAt && Date.now()-lastFixAt>15000){ anchorStatus="stale"; }
+  else if(curFix){
+    distFromAnchor=haversineM(anchor.lat,anchor.lon,curFix.lat,curFix.lon);
+    if(distFromAnchor>anchorRadius()) anchorStatus="far";
+    else anchorStatus = anchor.accuracy>30 ? "poor" : "ok";
+  }
+  updateAnchorUI();
+}
+function updateAnchorUI(){
+  var badge=document.getElementById("recBadge");
+  if(!badge) return;
+  var l1=document.getElementById("anchorLine1");
+  var l2=document.getElementById("anchorLine2");
+  var warn=document.getElementById("moveWarn");
+  var warnText=document.getElementById("moveWarnText");
+  var hud=document.getElementById("hudAnchor");
+  var btn=document.getElementById("btnReanchor");
+  var paused=recordPaused();
+  badge.textContent = paused? "一時停止中":"記録中";
+  badge.className = "recbadge "+(paused?"off":"on");
+  if(anchorStatus==="unavailable"){
+    l1.textContent="測定点：GPSが使えません（未許可または未対応）。測定点の固定なしで記録します。";
+  } else if(!anchor){
+    l1.textContent="測定点：取得中…（GPSの位置を待っています）";
+  } else {
+    l1.textContent="測定点：固定済み（精度 ±"+Math.round(anchor.accuracy)+"m）"+(distFromAnchor!==null? "／測定点からの距離：約"+Math.round(distFromAnchor)+"m":"")+(anchorStatus==="poor"? "／精度が低めです":"");
+  }
+  if(anchorStatus==="far") l2.textContent="測定点から離れています。自動記録を一時停止しています。測定点に戻ると自動で再開します。";
+  else if(anchorStatus==="stale") l2.textContent="GPSの位置が15秒以上更新されていません。自動記録を一時停止しています。空の開けた場所で少し待ってください。";
+  else if(walkingNow) l2.textContent="歩行を検出しました。自動記録を一時停止しています。その場で止まってください。";
+  else if(anchorStatus==="unavailable") l2.textContent="GPSなしでもスキャンは続けられます。その場から動かないよう、特に意識して撮影してください。";
+  else if(anchorStatus==="poor") l2.textContent="GPSの精度が低いため、離れたことの検出は大まかになります。スキャンは通常どおり記録しています。";
+  else if(anchorStatus==="acquiring") l2.textContent="GPSの位置が取れ次第、その場が測定点として固定されます。取れるまでは通常どおり記録します。";
+  else l2.textContent="測定点の範囲内で記録しています。その場でゆっくり回転してスキャンしてください。";
+  var showWarn=false, wmsg="";
+  if(anchorStatus==="far"){ showWarn=true; wmsg="<b>測定点から離れています（約"+Math.round(distFromAnchor||0)+"m）。</b><br>自動記録を一時停止しています。測定点に戻ってください。別の場所で撮ったデータが混ざると、判定がずれる原因になります。"; }
+  else if(walkingNow){ showWarn=true; wmsg="<b>歩行を検出しました。</b><br>自動記録を一時停止しています。その場で止まって、ゆっくり回転して撮影してください。"; }
+  else if(anchorStatus==="stale"){ showWarn=true; wmsg="<b>GPSの位置が更新されていません。</b><br>自動記録を一時停止しています。空の開けた場所で少し待ってください。"; }
+  if(warn){ warn.classList.toggle("show",showWarn); if(showWarn && warnText) warnText.innerHTML=wmsg; }
+  if(hud){ hud.textContent = anchorStatus==="unavailable" ? "GPSなし" : (!anchor ? "取得中" : (distFromAnchor===null ? "—" : "約"+Math.round(distFromAnchor)+"m")); }
+  if(btn){ btn.disabled = !curFix; }
+}
+function startAnchorTracking(){
+  trackingSince=Date.now(); lastFixAt=0;
+  if(gpsSeedFix && Date.now()-gpsSeedFix.t<60000){ onAnchorFix(gpsSeedFix); lastFixAt=Date.now(); } // grace period until the watch delivers a fresh fix
+  positionProvider.start(onAnchorFix,function(m){ walkingNow=!!m.walking; updateAnchorState(); },onAnchorError);
+  updateAnchorState();
+}
+function stopAnchorTracking(){ positionProvider.stop(); }
+document.getElementById("btnReanchor").addEventListener("click",function(){
+  if(!curFix) return;
+  anchor=curFix; bestFix=curFix;
+  updateAnchorState();
+});
 
 /* ---------- Sky map ---------- */
 function drawMap(canvas){
@@ -635,8 +852,8 @@ function drawMap(canvas){
       ctx.arc(C,C,rInner,a1,a0,true);
       ctx.closePath();
       if(st===1){
-        var i2=a*EL_BINS+e, t=skyV[i2]+obsV[i2];
-        var ratio=t? obsV[i2]/t:0;
+        var i2=a*EL_BINS+e, cs=skyV[i2]+(includeFar?farSkyV[i2]:0), co=obsV[i2]+(includeFar?farObsV[i2]:0), t=cs+co;
+        var ratio=t? co/t:0;
         ctx.fillStyle = ratio>0.25 ? "#7fb069" : "#1d9e6c";
       } else if(st===2){ ctx.fillStyle="#d84a3a"; }
       else { ctx.fillStyle=dark?"#26333f":"#ccd4dc"; }
@@ -740,6 +957,9 @@ function refreshScanUI(){
   var g=document.getElementById("guide");
   if(darkNow){ g.innerHTML="今は<b>暗すぎて判定できません</b>。夜間・暗所では空も障害物と誤判定されます。明るい時間帯に測り直してください。"; }
   else if(elevationSigned!==null && elevationSigned<=0){ g.innerHTML="今は<b>水平より下</b>を向いています。この向きはスキャン対象外です。空に向け直してください。"; }
+  else if(anchorStatus==="far"){ g.innerHTML="測定点から<b>離れています</b>。自動記録は一時停止中です。測定点に戻ってください。"; }
+  else if(anchorStatus==="stale"){ g.innerHTML="<b>GPSの位置が更新されていません</b>。自動記録は一時停止中です。空の開けた場所で少し待ってください。"; }
+  else if(walkingNow){ g.innerHTML="<b>歩行を検出</b>しました。自動記録は一時停止中です。その場で止まって、ゆっくり回転してください。"; }
   else if(s.coverage>=0.95){ g.innerHTML="必要範囲はほぼスキャンできました。<b>「結果を見る」</b>へ進んでください。"; }
   else if(s.coverage>=0.6){ g.innerHTML="いい調子です。残りの<b>灰色の範囲</b>に向けて、ゆっくり動かしてください。"; }
   drawMap(document.getElementById("skymap"));
@@ -841,6 +1061,27 @@ document.getElementById("btnOri").addEventListener("click",function(){
   }
 });
 
+var gpsGranted=false;
+document.getElementById("btnGps").addEventListener("click",function(){
+  hideErr("startErr");
+  if(!navigator.geolocation){
+    showErr("startErr","この端末・ブラウザでは位置情報（GPS）が使えません。測定点の固定なしでスキャンします（スキャン自体は可能です）。");
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(function(p){
+    gpsGranted=true;
+    // keep the fix as a seed so the anchor can be fixed immediately at scan start
+    gpsSeedFix={lat:p.coords.latitude, lon:p.coords.longitude, accuracy:(typeof p.coords.accuracy==="number"? p.coords.accuracy:999), t:Date.now()};
+    var s=document.getElementById("stGps"); s.textContent="許可済み"; document.getElementById("btnGps").classList.add("done");
+  },function(err){
+    if(err && err.code===1){
+      showErr("startErr","位置情報の許可が得られませんでした。ブラウザのサイト設定で位置情報を許可し直してください。許可しなくてもスキャンはできます（測定点の固定は働きません）。");
+    } else {
+      showErr("startErr","位置情報を取得できませんでした。屋外などGPSの届く場所では、スキャン開始時に自動で再試行されます。許可しなくてもスキャンはできます。");
+    }
+  },{enableHighAccuracy:true, timeout:15000});
+});
+
 /* ---------- Flow ---------- */
 function show(screen){
   ["screen-intro","screen-perm","screen-cal","screen-scan","screen-result"].forEach(function(id){
@@ -864,6 +1105,7 @@ document.getElementById("btnBeginScan").addEventListener("click",function(){
     showErr("scanErr","センサーの値が取れていません。端末を8の字に動かすとコンパスが補正されることがあります。");
   }
   scanning=true;
+  startAnchorTracking(); // fix this spot as the GPS measurement point and watch for movement / walking
   if(sampleTimer) clearInterval(sampleTimer);
   sampleTimer=setInterval(scanTick,300);
   refreshScanUI();
@@ -873,6 +1115,11 @@ document.getElementById("btnMarkSky").addEventListener("click",function(){ stamp
 
 document.getElementById("btnFinish").addEventListener("click",function(){
   scanning=false; if(sampleTimer) clearInterval(sampleTimer);
+  stopAnchorTracking();
+  renderResult();
+  show("screen-result");
+});
+function renderResult(){
   // if a large share of this scan was measured in the dark, flag the verdict as unreliable
   var darkNote=document.getElementById("darkResultNote");
   if(darkNote) darkNote.classList.toggle("show", lumTicks>=10 && darkTicks/lumTicks>=0.4);
@@ -906,14 +1153,36 @@ document.getElementById("btnFinish").addEventListener("click",function(){
   document.getElementById("dirSummary").textContent = parts.length?
     "障害物が目立つ方角："+parts.join("、")+"。この方角の建物・樹木が主な遮りです。":
     (s.scanned? "特定の方角に偏った障害物は目立ちません。":"");
+  // data recorded away from the measurement point is quarantined; say how
+  // much there is and let the user fold it back in if they choose to
+  var farCells=countFarCells();
+  var fn=document.getElementById("farNote"), fb=document.getElementById("btnFarToggle");
+  if(fn && fb){
+    if(farCells>0){
+      fn.classList.remove("hidden"); fb.classList.remove("hidden");
+      fn.textContent = includeFar ?
+        "測定点から離れた状態で記録された "+farCells+" セル分を、今は含めて判定しています。" :
+        "測定点から離れた状態で記録された "+farCells+" セル分は、判定から除外しています。";
+      fb.textContent = includeFar ? "範囲外の記録を除外して表示する" : "範囲外の記録も含めて表示する";
+    } else { fn.classList.add("hidden"); fb.classList.add("hidden"); }
+  }
   drawMap(document.getElementById("skymap2"));
-  show("screen-result");
+}
+document.getElementById("btnFarToggle").addEventListener("click",function(){
+  includeFar=!includeFar;
+  renderResult();
 });
 function resetAll(){
   skyV=new Float32Array(AZ_BINS*EL_BINS);
   obsV=new Float32Array(AZ_BINS*EL_BINS);
+  farSkyV=new Float32Array(AZ_BINS*EL_BINS);
+  farObsV=new Float32Array(AZ_BINS*EL_BINS);
+  includeFar=false;
   if(sampleTimer) clearInterval(sampleTimer);
   scanning=false;
+  stopAnchorTracking();
+  anchor=null; curFix=null; bestFix=null; anchorStatus="idle"; walkingNow=false; distFromAnchor=null; gpsUnavailable=false; lastFixAt=0;
+  updateAnchorUI();
   lumSmooth=null; darkNow=false; lumTicks=0; darkTicks=0;
   var da=document.getElementById("darkAlert"); if(da) da.classList.remove("show");
   var dn=document.getElementById("darkResultNote"); if(dn) dn.classList.remove("show");
@@ -926,6 +1195,7 @@ document.getElementById("btnRescan").addEventListener("click",function(){
   show("screen-scan");
   sizeOverlay();
   scanning=true;
+  startAnchorTracking(); // resumes tracking; the measurement point fixed earlier is kept
   if(sampleTimer) clearInterval(sampleTimer);
   sampleTimer=setInterval(scanTick,300);
   refreshScanUI();
