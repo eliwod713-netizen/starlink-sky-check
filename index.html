@@ -162,7 +162,7 @@
       <ol class="steps">
         <li><span class="num">1</span><p>アンテナを置きたい場所に立つ<small>屋根の上など、実際に設置する高さ・位置が理想です。この画面で概要と操作の流れを確認します</small></p></li>
         <li><span class="num">2</span><p>カメラとモーションセンサーを許可する<small>次の画面で許可を取ります。映像とデータはこの端末の中だけで処理され、外部に送信されません。位置情報（GPS）は任意で、スキャン開始地点を「測定点」として固定するために使います</small></p></li>
-        <li><span class="num">3</span><p>北を向いて、コンパス（方位）を補正する<small>北を向いた状態で方位の表示を合わせます。初期値として+10°の補正が入っています</small></p></li>
+        <li><span class="num">3</span><p>北を向いて、コンパス（方位）を補正する<small>北を向いた状態で方位の表示を合わせます。方位補正の初期値は0°です</small></p></li>
         <li><span class="num">4</span><p>スマホを空に向けて、ゆっくり全方向をなめるようにスキャンする<small>真上から地平線近くまで、方位360°をまんべんなく。目安は1〜2分です。カメラ映像上で灰色の部分が未スキャン、映像が見える部分がスキャン済みです。水平より下を向いている間は記録されません</small></p></li>
         <li><span class="num">5</span><p>スカイマップと判定を確認する<small>高度25°以上の範囲がStarlinkの通信に必要な視野の目安です</small></p></li>
       </ol>
@@ -233,16 +233,16 @@
 
     <div class="card">
       <h2>方位の補正</h2>
-      <p class="note" style="margin:0 0 10px">コンパスの表示がずれている場合の調整です。初期値として時計回りに <b>+10°</b> の補正が入っています。上の手順で北を向いた状態で、下の「今向いている方位」が北（0°）になるようボタンで調整してください。北が分かりにくい場合は、方角の分かっている方向（例：南）を向いて確認しても構いません。スキャン画面でも同じ調整ができます。</p>
+      <p class="note" style="margin:0 0 10px">コンパスの表示がずれている場合の調整です。方位補正の初期値は <b>0°</b> です。上の手順で北を向いた状態で、下の「今向いている方位」が北（0°）になるようボタンで調整してください。北が分かりにくい場合は、方角の分かっている方向（例：南）を向いて確認しても構いません。スキャン画面でも同じ調整ができます。</p>
       <p style="margin:0 0 10px;font-size:15px">今向いている方位：<b class="calHeading">—</b></p>
       <div class="calrow" role="group" aria-label="方位補正の調整（方位補正画面）">
         <button type="button" class="btn calbtn" data-delta="-5">−5°</button>
         <button type="button" class="btn calbtn" data-delta="-1">−1°</button>
-        <div class="calval"><span class="v calValText">+10°</span><span class="k">現在の補正</span></div>
+        <div class="calval"><span class="v calValText">0°</span><span class="k">現在の補正</span></div>
         <button type="button" class="btn calbtn" data-delta="1">+1°</button>
         <button type="button" class="btn calbtn" data-delta="5">+5°</button>
       </div>
-      <button type="button" class="btn calreset" style="margin-top:10px">補正を初期値（+10°）に戻す</button>
+      <button type="button" class="btn calreset" style="margin-top:10px">補正を初期値（0°）に戻す</button>
       <p class="note" style="margin:10px 0 0">＋は時計回り、−は反時計回りへの補正です。</p>
     </div>
 
@@ -275,13 +275,14 @@
         <span class="pill">方位 <b id="hudAz">—</b></span>
         <span class="pill">高度 <b id="hudEl">—</b></span>
         <span class="pill">向いている方角 <b id="hudDir">—</b></span>
-        <span class="pill">補正 <b class="calValText">+10°</b></span>
+        <span class="pill">補正 <b class="calValText">0°</b></span>
         <span class="pill">測定点まで <b id="hudAnchor">—</b></span>
       </div>
       <div class="reticle"></div>
       <div class="guide" id="guide">スマホを空に向けて、<b>ゆっくり</b>一周させてください。映像の上の灰色が未スキャンの範囲です。灰色が消えるように、真上 → 周囲の順に動かすのがコツです。</div>
     </div>
     <p class="note" style="margin:8px 2px 0">カメラ映像の見え方：<b>灰色</b>＝まだスキャンしていない範囲／<b>濃い灰色</b>＝水平より下（スキャン対象外）／<b>映像がそのまま見える</b>＝スキャン済み。</p>
+    <p class="note hidden" id="sunNote" style="margin:6px 2px 0;color:var(--warn)">☀️ 位置情報（GPS）が取れていないため太陽の位置を計算できず、太陽の方向を障害物と誤判定することがあります。太陽が中央に写っている方向は、下の「空として記録」ボタンで上書きできます。</p>
 
     <div class="card" style="margin-top:14px">
       <h2>スキャンの進捗</h2>
@@ -307,16 +308,16 @@
 
     <div class="card">
       <h2>方位の補正</h2>
-      <p class="note" style="margin:0 0 10px">初期値として時計回りに <b>+10°</b> の補正が入っています。方角の分かっている方向（例：南）を向いて、下の「今向いている方位」が実際と合うまでボタンで調整してください。補正はHUD・スカイマップ・これから記録する分にすぐ反映されます。途中で大きく変えた場合は、リセットして最初から測り直すのがおすすめです。</p>
+      <p class="note" style="margin:0 0 10px">方位補正の初期値は0°です。方角の分かっている方向（例：南）を向いて、下の「今向いている方位」が実際と合うまでボタンで調整してください。補正はHUD・スカイマップ・これから記録する分にすぐ反映されます。途中で大きく変えた場合は、リセットして最初から測り直すのがおすすめです。</p>
       <p style="margin:0 0 10px;font-size:15px">今向いている方位：<b class="calHeading">—</b></p>
       <div class="calrow" role="group" aria-label="方位補正の調整">
         <button type="button" class="btn calbtn" data-delta="-5">−5°</button>
         <button type="button" class="btn calbtn" data-delta="-1">−1°</button>
-        <div class="calval"><span class="v calValText">+10°</span><span class="k">現在の補正</span></div>
+        <div class="calval"><span class="v calValText">0°</span><span class="k">現在の補正</span></div>
         <button type="button" class="btn calbtn" data-delta="1">+1°</button>
         <button type="button" class="btn calbtn" data-delta="5">+5°</button>
       </div>
-      <button type="button" class="btn calreset" style="margin-top:10px">補正を初期値（+10°）に戻す</button>
+      <button type="button" class="btn calreset" style="margin-top:10px">補正を初期値（0°）に戻す</button>
       <p class="note" style="margin:10px 0 0">＋は時計回り、−は反時計回りへの補正です。端末やケースの磁気の影響で最適な補正量は変わることがあります。前の「方位の補正」画面でも同じ設定ができます。</p>
     </div>
 
@@ -445,11 +446,13 @@ var heading=null, elevation=null, elevationSigned=null, hasOrientation=false;
 var mapMode="north"; // "north" = north-up fixed, "heading" = heading-up (rotates with the user)
 var smoothHeading=null, lastMapRedraw=0, lastOverlayRedraw=0;
 var sawAbsolute=false; // set once a north-referenced orientation event has been seen
-/* Compass calibration: on the user's phone the raw heading read about 10deg
-   counterclockwise compared with another phone's compass, so the default
-   correction rotates every heading 10deg clockwise. The user can fine-tune
-   it on the scan screen (adjustOffset below); it is kept in memory only. */
-var headingOffset=10;
+/* Compass calibration: the default correction is 0deg. An earlier +10deg
+   default compensated for a counterclockwise bias seen on the user's phone,
+   but once GPS permission was granted the compass accuracy improved and the
+   bias disappeared, so the default went back to 0. The user can fine-tune
+   it on the calibration / scan screens (adjustOffset below); it is kept in
+   memory only. */
+var headingOffset=0;
 function applyHeadingOffset(raw){ return ((raw+headingOffset)%360+360)%360; }
 function fmtOffset(v){ return (v>0?"+":v<0?"\u2212":"")+Math.abs(v)+"\u00B0"; }
 function updateCalUI(){
@@ -602,6 +605,27 @@ function isSkyPixel(r,g,b){
   if(lum>205 && sat<0.45) return true;
   return false;
 }
+/* Solar position (azimuth / elevation in degrees) for a place and time,
+   from the standard low-precision solar coordinates. Accurate to well
+   under a degree, which is plenty for the 15-degree sun window used when
+   deciding whether a bright peak is the sun or a lamp. */
+function sunPosition(lat, lon, date){
+  var rad=Math.PI/180, deg=180/Math.PI;
+  var n=date.getTime()/86400000+2440587.5-2451545.0; // days since J2000.0
+  var L=((280.460+0.9856474*n)%360+360)%360;         // mean longitude
+  var g=((357.528+0.9856003*n)%360+360)%360;         // mean anomaly
+  var lambda=L+1.915*Math.sin(g*rad)+0.020*Math.sin(2*g*rad); // ecliptic longitude
+  var eps=23.439-0.0000004*n;                        // obliquity
+  var ra=Math.atan2(Math.cos(eps*rad)*Math.sin(lambda*rad),Math.cos(lambda*rad))*deg;
+  var dec=Math.asin(Math.sin(eps*rad)*Math.sin(lambda*rad))*deg;
+  var gmst=((18.697374558+24.06570982441908*n)%24+24)%24; // Greenwich sidereal time (hours)
+  var H=((gmst*15+lon-ra+540)%360)-180;              // hour angle
+  var phi=lat*rad, d=dec*rad, h=H*rad;
+  var east=-Math.cos(d)*Math.sin(h);
+  var north=Math.sin(d)*Math.cos(phi)-Math.cos(d)*Math.sin(phi)*Math.cos(h);
+  var up=Math.sin(d)*Math.sin(phi)+Math.cos(d)*Math.cos(phi)*Math.cos(h);
+  return { az:((Math.atan2(east,north)*deg)+360)%360, el:Math.asin(Math.max(-1,Math.min(1,up)))*deg };
+}
 function sampleFrame(){
   if(!camOK || heading===null || elevation===null) return;
   if(elevationSigned!==null && elevationSigned<=0) return; // below the horizon: out of scan scope
@@ -610,17 +634,57 @@ function sampleFrame(){
   try{ sCtx.drawImage(video,0,0,w,h); }catch(err){ return; }
   var data;
   try{ data=sCtx.getImageData(0,0,w,h).data; }catch(err){ return; }
-  var lumSum=0, lumN=0;
+  /* First pass: luminance of the whole frame, its centre and its surround.
+     Real sky is bright fairly evenly across the frame, while a lamp is a
+     local peak — bright in the centre, dark around it — which the per-pixel
+     test alone cannot see (it called any bright spot "sky", so street
+     lights were recorded as open sky). */
+  var lumSum=0, lumN=0, cenSum=0, cenN=0, surSum=0, surN=0;
+  var cx0=w*0.3, cx1=w*0.7, cy0=h*0.3, cy1=h*0.7;
+  for(var y0=0;y0<h;y0+=2){
+    for(var x0=0;x0<w;x0+=2){
+      var p0=(y0*w+x0)*4;
+      var lum0=0.2126*data[p0]+0.7152*data[p0+1]+0.0722*data[p0+2];
+      lumSum+=lum0; lumN++;
+      if(x0>=cx0&&x0<cx1&&y0>=cy0&&y0<cy1){ cenSum+=lum0; cenN++; } else { surSum+=lum0; surN++; }
+    }
+  }
+  var cenMean=cenN?cenSum/cenN:0, surMean=surN?surSum/surN:0;
+  var lightPeak = cenN>0 && surN>0 && cenMean>110 && (cenMean-surMean)>45;
+  var lampCentre=false;
+  if(lightPeak){
+    /* Sun exception: the sun is also a local bright peak, but the sky
+       around it is genuinely open. When a GPS position is available,
+       compute the sun's position; if the camera points within 15 degrees
+       of it and the sun is above the horizon, the peak is the sun and the
+       centre keeps the normal sky classification. At night, or without a
+       GPS fix, the exception does not apply (the scan screen shows a note
+       for the no-GPS case). */
+    var pos=curFix||anchor||gpsSeedFix;
+    var isSun=false;
+    if(pos){
+      var sp=sunPosition(pos.lat,pos.lon,new Date());
+      if(sp.el>0){
+        var e1=elevation*Math.PI/180, e2=sp.el*Math.PI/180;
+        var cs=Math.sin(e1)*Math.sin(e2)+Math.cos(e1)*Math.cos(e2)*Math.cos((heading-sp.az)*Math.PI/180);
+        var sep=Math.acos(Math.max(-1,Math.min(1,cs)))*180/Math.PI;
+        if(sep<=15) isSun=true;
+      }
+    }
+    lampCentre=!isSun;
+  }
   for(var y=0;y<h;y+=2){
     for(var x=0;x<w;x+=2){
       var p=(y*w+x)*4;
       var r=data[p],g=data[p+1],b=data[p+2];
-      lumSum+=0.2126*r+0.7152*g+0.0722*b; lumN++;
       var az=heading + ((x/(w-1))-0.5)*FOV_H;
       var el=elevation + (0.5-(y/(h-1)))*FOV_V;
       if(el<0||el>90) continue;
       var i=idx(az,el);
-      if(isSkyPixel(r,g,b)) skyV[i]+=1; else obsV[i]+=1;
+      // lamp at the centre: the fixture and its pole are physical
+      // obstructions, so record the centre as obstructed, never as sky
+      if(lampCentre && x>=cx0&&x<cx1&&y>=cy0&&y<cy1) obsV[i]+=1;
+      else if(isSkyPixel(r,g,b)) skyV[i]+=1; else obsV[i]+=1;
     }
   }
   if(lumN>0){
@@ -816,6 +880,11 @@ function updateAnchorUI(){
   else if(anchorStatus==="stale"){ showWarn=true; wmsg="<b>GPSの位置が更新されていません。</b><br>自動記録を一時停止しています。空の開けた場所で少し待ってください。"; }
   if(warn){ warn.classList.toggle("show",showWarn); if(showWarn && warnText) warnText.innerHTML=wmsg; }
   if(hud){ hud.textContent = anchorStatus==="unavailable" ? "GPSなし" : (!anchor ? "取得中" : (distFromAnchor===null ? "—" : "約"+Math.round(distFromAnchor)+"m")); }
+  // Without any GPS position the sun exception cannot run (the sun's
+  // direction may then be misjudged as an obstruction); show the note on
+  // the scan screen in that case, hide it once a position is known.
+  var sn=document.getElementById("sunNote");
+  if(sn) sn.classList.toggle("hidden", !!(curFix||anchor||gpsSeedFix));
   if(btn){ btn.disabled = !curFix; }
 }
 function startAnchorTracking(){
@@ -1209,7 +1278,7 @@ Array.prototype.forEach.call(document.querySelectorAll(".calbtn"),function(b){
   b.addEventListener("click",function(){ adjustOffset(parseInt(b.getAttribute("data-delta"),10)||0); });
 });
 Array.prototype.forEach.call(document.querySelectorAll(".calreset"),function(b){
-  b.addEventListener("click",function(){ adjustOffset(10-headingOffset); });
+  b.addEventListener("click",function(){ adjustOffset(-headingOffset); });
 });
 window.addEventListener("resize",function(){ if(scanning){ sizeOverlay(); drawOverlay(); } });
 // iPhone: show the troubleshooting card (and the in-app-view warning when embedded)
