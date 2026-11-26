@@ -1,0 +1,872 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Starlink 見通しチェック</title>
+<style>
+  :root{
+    --bg:#f4f6f8; --surface:#ffffff; --surface2:#eef1f4; --ink:#14202b; --muted:#5b6b7a;
+    --line:#d7dee5; --accent:#0b7a55; --accent-ink:#ffffff; --danger:#c0392b; --warn:#b97d0a;
+    --ok:#1d9e6c; --bad:#d84a3a; --unknown:#c3ccd4; --chip:#e6ebef;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0c1218; --surface:#141d26; --surface2:#1a2531; --ink:#e8eef3; --muted:#9db0c0;
+      --line:#2a3947; --accent:#17b07e; --accent-ink:#06231a; --danger:#ff7a6b; --warn:#f0b93e;
+      --ok:#2fbf85; --bad:#e05a4a; --unknown:#33424f; --chip:#1e2b38;
+    }
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"Hiragino Kaku Gothic ProN","Hiragino Sans","Noto Sans JP",system-ui,-apple-system,"Segoe UI",sans-serif;
+    line-height:1.6; -webkit-text-size-adjust:100%;
+  }
+  button,[role="button"]{min-height:44px}
+  .wrap{max-width:560px;margin:0 auto;padding:16px 16px 40px}
+  h1{font-size:24px;line-height:1.35;margin:6px 0 4px;letter-spacing:.01em}
+  .lead{color:var(--muted);font-size:14.5px;margin:0 0 16px}
+  h2{font-size:17px;margin:0 0 8px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;margin:0 0 14px}
+  .steps{margin:0;padding:0;list-style:none;counter-reset:step}
+  .steps li{display:flex;gap:12px;padding:10px 0;border-bottom:1px dashed var(--line)}
+  .steps li:last-child{border-bottom:none;padding-bottom:2px}
+  .steps .num{flex:0 0 28px;width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--bg);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;margin-top:2px}
+  .steps p{margin:0;font-size:14.5px}
+  .steps small{display:block;color:var(--muted);font-size:12.5px}
+  .btn{
+    display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+    border:1px solid var(--line);background:var(--surface2);color:var(--ink);
+    border-radius:12px;padding:12px 14px;font-size:15.5px;font-weight:600;cursor:pointer;
+    font-family:inherit;text-align:center;
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .btn.danger{background:transparent;border-color:var(--bad);color:var(--bad)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn .st{font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px;background:var(--chip);color:var(--muted)}
+  .btn.done .st{background:var(--ok);color:#fff}
+  .stack{display:grid;gap:10px}
+  .note{font-size:12.5px;color:var(--muted)}
+  .err{display:none;background:color-mix(in srgb, var(--bad) 12%, var(--surface));border:1px solid var(--bad);color:var(--ink);border-radius:12px;padding:12px 14px;font-size:14px;margin:0 0 14px}
+  .err.show{display:block}
+  .darkalert{display:none;align-items:flex-start;gap:10px;background:color-mix(in srgb, var(--warn) 16%, var(--surface));border:1.5px solid var(--warn);color:var(--ink);border-radius:12px;padding:12px 14px;font-size:14px;margin:0 0 14px}
+  .darkalert.show{display:flex}
+  .darkalert .ic{font-size:20px;line-height:1.3;flex:0 0 auto}
+  .darkalert b{color:var(--warn)}
+  .darkalert p{margin:0}
+  .framewarn{background:color-mix(in srgb, var(--warn) 14%, var(--surface));border:1px solid var(--warn);border-radius:12px;padding:10px 12px;font-size:14px;margin:0 0 12px}
+  .framewarn b{color:var(--warn)}
+  .hidden{display:none !important}
+
+  /* Scan screen */
+  .camwrap{position:relative;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:3/4;max-height:62vh;width:100%}
+  @media (min-width:560px){.camwrap{aspect-ratio:4/3}}
+  .camwrap video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .camwrap .nocam{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#cfe0ec;font-size:14px;padding:20px;text-align:center;background:#18222c}
+  .hud{position:absolute;top:10px;left:10px;right:10px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
+  .hud .pill{background:rgba(8,15,22,.78);color:#eaf3f9;border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:600;font-variant-numeric:tabular-nums}
+  .hud .pill b{color:#7fe3bb}
+  .reticle{position:absolute;left:50%;top:50%;width:64px;height:64px;transform:translate(-50%,-50%);border:2px solid rgba(255,255,255,.85);border-radius:50%;pointer-events:none;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+  .reticle::after{content:"";position:absolute;left:50%;top:50%;width:6px;height:6px;border-radius:50%;background:#fff;transform:translate(-50%,-50%)}
+  .guide{position:absolute;left:10px;right:10px;bottom:10px;background:rgba(8,15,22,.82);color:#eaf3f9;border-radius:12px;padding:10px 12px;font-size:13.5px;pointer-events:none}
+  .guide b{color:#ffd166}
+  .camwrap canvas#overlay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .scopeout{position:absolute;top:54px;left:50%;transform:translateX(-50%);background:rgba(168,38,28,.9);color:#fff;border-radius:999px;padding:6px 14px;font-size:13px;font-weight:700;pointer-events:none;white-space:nowrap;z-index:3}
+  .prog{height:10px;background:var(--surface2);border-radius:999px;overflow:hidden;border:1px solid var(--line)}
+  .prog > div{height:100%;background:var(--accent);width:0%;transition:width .3s}
+  .proglabel{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin:6px 0 4px;font-variant-numeric:tabular-nums}
+  .markrow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .calrow{display:grid;grid-template-columns:1fr 1fr 1.2fr 1fr 1fr;gap:8px;align-items:stretch}
+  .calrow .btn{padding:10px 4px;font-size:14.5px}
+  .calval{display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:6px 4px;min-height:44px}
+  .calval .v{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.15}
+  .calval .k{font-size:11px;color:var(--muted);line-height:1.2}
+  .btn.obs{border-color:var(--bad);color:var(--bad);background:transparent}
+  .btn.sky{border-color:var(--ok);color:var(--ok);background:transparent}
+  @media (prefers-color-scheme: dark){ .btn.obs,.btn.sky{background:var(--surface)} }
+  .flash{animation:flash .35s}
+  @keyframes flash{0%{filter:brightness(1.6)}100%{filter:brightness(1)}}
+  @media (prefers-reduced-motion: reduce){ .flash{animation:none} .prog>div{transition:none} }
+
+  /* Map + results */
+  .seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:4px;margin:0 0 10px}
+  .seg button{border:none;background:transparent;color:var(--muted);border-radius:9px;padding:9px 6px;font-size:13.5px;font-weight:600;cursor:pointer;font-family:inherit;min-height:44px}
+  .seg button.active{background:var(--surface);color:var(--ink);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.18)}
+  .mapwrap{display:flex;justify-content:center}
+  canvas#skymap,canvas#skymap2{width:min(100%,380px);height:auto;aspect-ratio:1}
+  .legend{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin-top:8px}
+  .legend span{display:inline-flex;align-items:center;gap:6px}
+  .sw{width:14px;height:14px;border-radius:4px;display:inline-block;border:1px solid var(--line)}
+  .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stat{background:var(--surface2);border-radius:12px;padding:12px;text-align:center}
+  .stat .v{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1.2}
+  .stat .k{font-size:12.5px;color:var(--muted)}
+  .verdict{border-radius:14px;padding:16px;text-align:center;border:1.5px solid var(--line)}
+  .verdict .big{font-size:26px;font-weight:800;margin:2px 0 4px}
+  .verdict p{margin:0;font-size:14px}
+  .verdict.ok{border-color:var(--ok)} .verdict.ok .big{color:var(--ok)}
+  .verdict.mid{border-color:var(--warn)} .verdict.mid .big{color:var(--warn)}
+  .verdict.ng{border-color:var(--bad)} .verdict.ng .big{color:var(--bad)}
+  .dirlist{font-size:13.5px;color:var(--muted);margin:8px 0 0}
+  footer{color:var(--muted);font-size:12px;text-align:center;margin-top:18px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ===== Start screen ===== -->
+  <section id="screen-start">
+    <h1>Starlink 見通しチェック</h1>
+    <p class="lead">設置したい場所でスマホを空に向け、ゆっくり一周させてスキャンするだけ。上空がどれだけ開けていて、建物や木などの障害物がどれくらいあるかをその場で判定します。旧公式アプリの「障害物チェック」の代替として作ったWeb版です。</p>
+
+    <div class="err" id="startErr" role="alert"></div>
+
+    <div class="card">
+      <h2>やり方</h2>
+      <ol class="steps">
+        <li><span class="num">1</span><p>アンテナを置きたい場所に立つ<small>屋根の上など、実際に設置する高さ・位置が理想です</small></p></li>
+        <li><span class="num">2</span><p>下のボタンでカメラとモーションセンサーを許可する<small>映像とデータはこの端末の中だけで処理され、外部に送信されません</small></p></li>
+        <li><span class="num">3</span><p>スマホを空に向けて、ゆっくり全方向をなめるように動かす<small>真上から地平線近くまで、方位360°をまんべんなく。目安は1〜2分です。カメラ映像上で灰色の部分が未スキャン、映像が見える部分がスキャン済みです。水平より下を向いている間は記録されません</small></p></li>
+        <li><span class="num">4</span><p>スカイマップと判定を確認する<small>高度25°以上の範囲がStarlinkの通信に必要な視野の目安です</small></p></li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>許可の取得</h2>
+      <div class="stack">
+        <button class="btn" id="btnCam">📷 カメラを許可する <span class="st" id="stCam">未許可</span></button>
+        <button class="btn" id="btnOri">🧭 モーションセンサーを許可する <span class="st" id="stOri">未許可</span></button>
+        <button class="btn primary" id="btnStart" disabled>スキャンを開始する</button>
+      </div>
+      <p class="note" style="margin:10px 0 0">※ このページはHTTPSで開いてください（カメラとセンサーはHTTPS必須です）。センサーが使えない端末では、カメラ映像だけでもスキャンでき、手動ボタンで記録できます。</p>
+    </div>
+
+    <div class="card hidden" id="iosHelp">
+      <h2>iPhoneで許可が取れないとき</h2>
+      <p class="framewarn hidden" id="iosFrameNote"><b>アプリ内表示で開いています。</b>iPhoneでは、アプリの中に埋め込まれた表示だとカメラとモーションセンサーがブロックされ、許可ダイアログ自体が出ないことがあります。このページのリンクを <b>Safariで直接開いて</b>から、もう一度許可を取ってください。</p>
+      <ol class="steps">
+        <li><span class="num">1</span><p>Safariで直接開く<small>アプリ内ブラウザやChromeでダメな場合は、リンクをSafariで開き直してください（iPhoneのChromeも中身はSafariと同じ仕組みで、制限は共通です）</small></p></li>
+        <li><span class="num">2</span><p>モーションは端末設定も必要<small>「設定」アプリ →「Safari」（または使っているブラウザ）→「モーションと方向へのアクセス」をオンにしてから、このページを再読み込みし、もう一度「モーションセンサーを許可する」を押してください。許可ダイアログはボタンを押したときだけ出ます</small></p></li>
+        <li><span class="num">3</span><p>カメラを一度拒否した場合は設定から許可し直す<small>一度「許可しない」を選ぶとダイアログは二度と出ません。Safariならアドレスバー左端のボタン →「Webサイト設定」→ カメラを「許可」に。または「設定」→「Safari」→「カメラ」を「確認」か「許可」にしてください</small></p></li>
+        <li><span class="num">4</span><p>許可したのに動かないときは再読み込み<small>許可の直後はセンサーの値が届かないことがあります。ページを再読み込みしてから、もう一度ボタンを押してください</small></p></li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>方位の補正</h2>
+      <p class="note" style="margin:0 0 10px">コンパスの表示がずれている場合の調整です。初期値として時計回りに <b>+10°</b> の補正が入っています。モーションセンサーを許可すると下に今の方位が出るので、方角の分かっている方向（例：南）を向いて、表示が実際と合うまでボタンで調整してください。スキャン画面でも同じ調整ができます（進捗バー・手動記録の下、スカイマップの上にあります）。</p>
+      <p style="margin:0 0 10px;font-size:15px">今向いている方位：<b class="calHeading">—</b></p>
+      <div class="calrow" role="group" aria-label="方位補正の調整（開始画面）">
+        <button type="button" class="btn calbtn" data-delta="-5">−5°</button>
+        <button type="button" class="btn calbtn" data-delta="-1">−1°</button>
+        <div class="calval"><span class="v calValText">+10°</span><span class="k">現在の補正</span></div>
+        <button type="button" class="btn calbtn" data-delta="1">+1°</button>
+        <button type="button" class="btn calbtn" data-delta="5">+5°</button>
+      </div>
+      <button type="button" class="btn calreset" style="margin-top:10px">補正を初期値（+10°）に戻す</button>
+      <p class="note" style="margin:10px 0 0">＋は時計回り、−は反時計回りへの補正です。</p>
+    </div>
+
+    <div class="card">
+      <h2>判定の考え方</h2>
+      <p style="margin:0;font-size:14.5px">カメラ映像の明るさと色から「空」と「障害物」を自動で見分け、方位（5°刻み）×高度（5°刻み）のマス目に記録します。高度25°以上の必要範囲について、スキャン済みの割合（カバー率）と、その中の障害物の割合で判定します。判定基準は実用上の目安で、SpaceX公式の基準ではありません。</p>
+      <p style="margin:10px 0 0;font-size:14.5px">夜間や暗い場所では空自体が暗く映り、障害物と誤判定されやすくなります。そのため、映像が暗い間はスキャン画面に警告が出ます。できるだけ明るい時間帯に測ってください。</p>
+    </div>
+  </section>
+
+  <!-- ===== Scan screen ===== -->
+  <section id="screen-scan" class="hidden">
+    <h1 style="font-size:20px">空をスキャン中</h1>
+    <div class="err" id="scanErr" role="alert"></div>
+    <div class="darkalert" id="darkAlert" role="alert">
+      <span class="ic" aria-hidden="true">🌙</span>
+      <p><b>暗すぎます：この明るさでは判定できません。</b><br>夜間や暗い場所では空も暗く映るため、実際は開けていても「障害物」と誤判定され、結果が実際より悪く出ます。明るい時間帯に測り直してください。このまま続けると記録は残りますが、判定は信用しないでください。</p>
+    </div>
+
+    <div class="camwrap" id="camwrap">
+      <video id="video" playsinline muted autoplay></video>
+      <div class="nocam hidden" id="nocam">カメラ映像がありません。<br>下の手動ボタンで、向けた方向を記録できます。</div>
+      <canvas id="overlay" width="480" height="640" aria-hidden="true"></canvas>
+      <div class="scopeout hidden" id="scopeOut">水平以下はスキャン対象外です</div>
+      <div class="hud">
+        <span class="pill">方位 <b id="hudAz">—</b></span>
+        <span class="pill">高度 <b id="hudEl">—</b></span>
+        <span class="pill">向いている方角 <b id="hudDir">—</b></span>
+        <span class="pill">補正 <b class="calValText">+10°</b></span>
+      </div>
+      <div class="reticle"></div>
+      <div class="guide" id="guide">スマホを空に向けて、<b>ゆっくり</b>一周させてください。映像の上の灰色が未スキャンの範囲です。灰色が消えるように、真上 → 周囲の順に動かすのがコツです。</div>
+    </div>
+    <p class="note" style="margin:8px 2px 0">カメラ映像の見え方：<b>灰色</b>＝まだスキャンしていない範囲／<b>濃い灰色</b>＝水平より下（スキャン対象外）／<b>映像がそのまま見える</b>＝スキャン済み。</p>
+
+    <div class="card" style="margin-top:14px">
+      <h2>スキャンの進捗</h2>
+      <div class="proglabel" style="margin-top:2px"><span>必要範囲（高度25°以上）のスキャン済み</span><span id="covLabel">0%</span></div>
+      <div class="prog"><div id="covBar"></div></div>
+
+      <h2 style="margin-top:18px">自動判定が怪しいときは手動で記録</h2>
+      <p class="note" style="margin:0 0 10px">曇り空・逆光・白い建物などでは自動判定が外れることがあります。今スマホが向いている範囲（中央の円付近）を、ボタンで上書きできます。</p>
+      <div class="markrow">
+        <button class="btn obs" id="btnMarkObs">🚧 障害物として記録</button>
+        <button class="btn sky" id="btnMarkSky">☀️ 空として記録</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>方位の補正</h2>
+      <p class="note" style="margin:0 0 10px">初期値として時計回りに <b>+10°</b> の補正が入っています。方角の分かっている方向（例：南）を向いて、下の「今向いている方位」が実際と合うまでボタンで調整してください。補正はHUD・スカイマップ・これから記録する分にすぐ反映されます。途中で大きく変えた場合は、リセットして最初から測り直すのがおすすめです。</p>
+      <p style="margin:0 0 10px;font-size:15px">今向いている方位：<b class="calHeading">—</b></p>
+      <div class="calrow" role="group" aria-label="方位補正の調整">
+        <button type="button" class="btn calbtn" data-delta="-5">−5°</button>
+        <button type="button" class="btn calbtn" data-delta="-1">−1°</button>
+        <div class="calval"><span class="v calValText">+10°</span><span class="k">現在の補正</span></div>
+        <button type="button" class="btn calbtn" data-delta="1">+1°</button>
+        <button type="button" class="btn calbtn" data-delta="5">+5°</button>
+      </div>
+      <button type="button" class="btn calreset" style="margin-top:10px">補正を初期値（+10°）に戻す</button>
+      <p class="note" style="margin:10px 0 0">＋は時計回り、−は反時計回りへの補正です。端末やケースの磁気の影響で最適な補正量は変わることがあります。最初の画面でも同じ設定ができます。</p>
+    </div>
+
+    <div class="card">
+      <h2>スカイマップ（途中経過）</h2>
+      <div class="seg" role="group" aria-label="スカイマップの向き（スキャン中）">
+        <button type="button" id="modeNorthScan" class="active" aria-pressed="true">北固定</button>
+        <button type="button" id="modeHeadScan" aria-pressed="false">向いている方向</button>
+      </div>
+      <p class="note" style="margin:0 0 10px">「向いている方向」では、今スマホが向いている方角がマップの上になり、体の向きに合わせてマップが回転します。</p>
+      <div class="mapwrap"><canvas id="skymap" width="760" height="760" aria-label="スカイマップ"></canvas></div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--ok)"></i>空</span>
+        <span><i class="sw" style="background:var(--bad)"></i>障害物</span>
+        <span><i class="sw" style="background:var(--unknown)"></i>未スキャン</span>
+        <span>中心＝真上／外周＝地平線／<span id="legendTopScan">上＝北</span>／破線＝高度25°</span>
+      </div>
+    </div>
+
+    <div class="stack">
+      <button class="btn primary" id="btnFinish">スキャンを終えて結果を見る</button>
+      <button class="btn danger" id="btnReset1">リセットして最初から</button>
+    </div>
+  </section>
+
+  <!-- ===== Result screen ===== -->
+  <section id="screen-result" class="hidden">
+    <h1 style="font-size:20px">チェック結果</h1>
+
+    <div class="verdict" id="verdictBox">
+      <div style="font-size:13px;color:var(--muted)">この場所の見通し判定</div>
+      <div class="big" id="verdictBig">—</div>
+      <p id="verdictText">—</p>
+    </div>
+
+    <div class="darkalert" id="darkResultNote" role="alert" style="margin-top:14px">
+      <span class="ic" aria-hidden="true">🌙</span>
+      <p><b>注意：このスキャンの多くは暗い環境で行われました。</b><br>暗い場所では空も暗く映って障害物と誤判定されやすいため、上の判定は実際より悪く出ている可能性があります。明るい時間帯に測り直すことをおすすめします。</p>
+    </div>
+
+    <div class="card" style="margin-top:14px">
+      <div class="stats">
+        <div class="stat"><div class="v" id="statCov">—</div><div class="k">必要範囲のカバー率<br>（高度25°以上をスキャン済み）</div></div>
+        <div class="stat"><div class="v" id="statObs">—</div><div class="k">必要範囲内の障害物<br>（スキャン済み部分のうち）</div></div>
+      </div>
+      <p class="dirlist" id="dirSummary"></p>
+    </div>
+
+    <div class="card">
+      <h2>スカイマップ</h2>
+      <div class="seg" role="group" aria-label="スカイマップの向き（結果）">
+        <button type="button" id="modeNorthResult" class="active" aria-pressed="true">北固定</button>
+        <button type="button" id="modeHeadResult" aria-pressed="false">向いている方向</button>
+      </div>
+      <p class="note" style="margin:0 0 10px">「向いている方向」では、今スマホが向いている方角がマップの上になり、体の向きに合わせてマップが回転します。</p>
+      <div class="mapwrap"><canvas id="skymap2" width="760" height="760" aria-label="スカイマップ（結果）"></canvas></div>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--ok)"></i>空</span>
+        <span><i class="sw" style="background:var(--bad)"></i>障害物</span>
+        <span><i class="sw" style="background:var(--unknown)"></i>未スキャン</span>
+        <span>中心＝真上／外周＝地平線／<span id="legendTopResult">上＝北</span>／破線＝高度25°</span>
+      </div>
+    </div>
+
+    <div class="stack">
+      <button class="btn primary" id="btnRescan">再スキャン（続きから）</button>
+      <button class="btn" id="btnReset2">リセット（記録を消して最初から）</button>
+    </div>
+    <p class="note" style="margin-top:12px">判定基準（障害物の割合）：5%以下＝設置OK／15%以下＝微妙／それ以上＝厳しい。これは実用上の目安であり、SpaceX公式の基準ではありません。カバー率が低いと判定の信頼性も下がります。障害物が北側に寄っている場合は比較的影響が小さく、南〜頭上に広がっている場合は影響が大きい傾向があります（北半球の場合）。最終判断は実際の設置・通信テストで行ってください。</p>
+  </section>
+
+  <footer>Starlink 見通しチェック（Web版・試作）／ 計測はすべてこの端末内で処理されます</footer>
+</div>
+
+<canvas id="sample" width="48" height="36" class="hidden"></canvas>
+
+<script>
+(function(){
+"use strict";
+/* ---------- Grid ---------- */
+var AZ_BINS=72, EL_BINS=18; // 5deg each
+var skyV=new Float32Array(AZ_BINS*EL_BINS);
+var obsV=new Float32Array(AZ_BINS*EL_BINS);
+function idx(az,el){ 
+  var a=((Math.floor(az/5)%AZ_BINS)+AZ_BINS)%AZ_BINS;
+  var e=Math.floor(el/5); if(e<0)e=0; if(e>=EL_BINS)e=EL_BINS-1;
+  return a*EL_BINS+e;
+}
+function cellState(i){
+  var s=skyV[i],o=obsV[i],t=s+o;
+  if(t<2) return 0; // unknown
+  return (o/t>0.5)?2:1; // 1 sky, 2 obstructed
+}
+function computeStats(){
+  var total=0,scanned=0,obs=0;
+  var dirObs=[0,0,0,0,0,0,0,0], dirScan=[0,0,0,0,0,0,0,0];
+  for(var a=0;a<AZ_BINS;a++){
+    for(var e=0;e<EL_BINS;e++){
+      var el=e*5+2.5;
+      if(el<25) continue;
+      total++;
+      var st=cellState(a*EL_BINS+e);
+      var d=Math.floor(((a*5+2.5)%360)/45);
+      if(st!==0){ scanned++; dirScan[d]++; if(st===2){obs++; dirObs[d]++;} }
+    }
+  }
+  return { coverage: total? scanned/total:0, obstruction: scanned? obs/scanned:0, scanned:scanned, total:total, dirObs:dirObs, dirScan:dirScan };
+}
+
+/* ---------- Orientation ---------- */
+var heading=null, elevation=null, elevationSigned=null, hasOrientation=false;
+var mapMode="north"; // "north" = north-up fixed, "heading" = heading-up (rotates with the user)
+var smoothHeading=null, lastMapRedraw=0, lastOverlayRedraw=0;
+var sawAbsolute=false; // set once a north-referenced orientation event has been seen
+/* Compass calibration: on the user's phone the raw heading read about 10deg
+   counterclockwise compared with another phone's compass, so the default
+   correction rotates every heading 10deg clockwise. The user can fine-tune
+   it on the scan screen (adjustOffset below); it is kept in memory only. */
+var headingOffset=10;
+function applyHeadingOffset(raw){ return ((raw+headingOffset)%360+360)%360; }
+function fmtOffset(v){ return (v>0?"+":v<0?"\u2212":"")+Math.abs(v)+"\u00B0"; }
+function updateCalUI(){
+  // the correction value is shown in several places (start screen, scan screen, HUD pill)
+  var els=document.querySelectorAll(".calValText");
+  for(var i=0;i<els.length;i++){ els[i].textContent=fmtOffset(headingOffset); }
+}
+function adjustOffset(delta){
+  if(!delta) return;
+  headingOffset+=delta;
+  while(headingOffset>180) headingOffset-=360;
+  while(headingOffset<=-180) headingOffset+=360;
+  // rotate the live values by the same delta so the HUD/map move immediately;
+  // future sensor events use the new offset via applyHeadingOffset.
+  if(heading!==null) heading=((heading+delta)%360+360)%360;
+  if(smoothHeading!==null) smoothHeading=((smoothHeading+delta)%360+360)%360;
+  updateCalUI();
+  updateHUD();
+  drawMap(document.getElementById("skymap"));
+  if(!document.getElementById("screen-result").classList.contains("hidden")){ drawMap(document.getElementById("skymap2")); }
+  if(scanning) drawOverlay();
+}
+function currentRot(){
+  if(mapMode!=="heading") return 0;
+  if(smoothHeading!==null) return smoothHeading;
+  return heading!==null? heading:0;
+}
+function onOrientation(e){
+  // Prefer the north-referenced (absolute) event stream when the browser offers both.
+  if(e.absolute===true){ sawAbsolute=true; }
+  else if(sawAbsolute && e.absolute===false){ return; }
+  var gotHeading=false;
+  if(typeof e.webkitCompassHeading==="number" && !isNaN(e.webkitCompassHeading)){
+    // iOS: webkitCompassHeading is already the compass heading; elevation keeps the legacy beta formula.
+    heading=applyHeadingOffset(((e.webkitCompassHeading%360)+360)%360); hasOrientation=true; gotHeading=true;
+    if(e.beta!==null && e.beta!==undefined){
+      var bi=e.beta;
+      elevation=Math.max(0,Math.min(90,Math.abs(Math.abs(bi)-90)));
+      var upI=-Math.cos(bi*Math.PI/180);
+      elevationSigned=Math.asin(Math.max(-1,Math.min(1,upI)))*180/Math.PI;
+    }
+  } else if(e.alpha!==null && e.alpha!==undefined && e.beta!==null && e.beta!==undefined && e.gamma!==null && e.gamma!==undefined){
+    // Derive the direction the rear camera points from the full alpha/beta/gamma
+    // rotation (device frame -> earth frame: x=east, y=north, z=up; the camera
+    // looks along the device -z axis). Taking the heading from alpha alone
+    // (360-alpha) is only correct while the phone is upright and unrolled: once
+    // the phone is tilted up at the sky or rolled, alpha no longer equals the
+    // camera azimuth and the reported direction can be off by ~90 degrees
+    // (e.g. facing south but read as west).
+    var a=e.alpha*Math.PI/180, b=e.beta*Math.PI/180, g=e.gamma*Math.PI/180;
+    var sa=Math.sin(a), ca=Math.cos(a), sb=Math.sin(b), cb=Math.cos(b), sg=Math.sin(g), cg=Math.cos(g);
+    var vx=-ca*sg - sa*sb*cg; // east component of the camera direction
+    var vy=-sa*sg + ca*sb*cg; // north component
+    var vz=-cb*cg;            // up component
+    hasOrientation=true;
+    elevationSigned=Math.asin(Math.max(-1,Math.min(1,vz)))*180/Math.PI;
+    elevation=Math.max(0,Math.min(90,elevationSigned));
+    // azimuth is unstable when the camera points almost straight up/down; keep the last one
+    if(vx*vx+vy*vy>0.0025){
+      var hDeg=Math.atan2(vx,vy)*180/Math.PI;
+      heading=applyHeadingOffset(((hDeg%360)+360)%360); gotHeading=true;
+    }
+  } else {
+    return;
+  }
+  if(gotHeading){
+    // smooth the heading used for map rotation so the map does not jitter with compass noise
+    if(smoothHeading===null){ smoothHeading=heading; }
+    else{
+      var d=((heading-smoothHeading+540)%360)-180;
+      smoothHeading=((smoothHeading+d*0.35)%360+360)%360;
+    }
+    // in heading-up mode, redraw the visible map live (throttled) as the user turns
+    if(mapMode==="heading"){
+      var now=Date.now();
+      if(now-lastMapRedraw>120){
+        lastMapRedraw=now;
+        if(!document.getElementById("screen-scan").classList.contains("hidden")){ drawMap(document.getElementById("skymap")); }
+        else if(!document.getElementById("screen-result").classList.contains("hidden")){ drawMap(document.getElementById("skymap2")); }
+      }
+    }
+  }
+  updateHUD();
+  // keep the camera overlay in sync while the phone turns (throttled)
+  if(scanning){
+    var now2=Date.now();
+    if(now2-lastOverlayRedraw>120){ lastOverlayRedraw=now2; drawOverlay(); }
+  }
+}
+var DIRS=["北","北東","東","南東","南","南西","西","北西"];
+function dirName(az){ return DIRS[Math.floor(((az+22.5)%360)/45)]; }
+function updateHUD(){
+  document.getElementById("hudAz").textContent = heading===null?"—":Math.round(heading)+"°";
+  document.getElementById("hudEl").textContent = elevationSigned===null?"—":Math.round(elevationSigned)+"°";
+  document.getElementById("hudDir").textContent = heading===null?"—":dirName(heading);
+  // live heading readouts next to the calibration controls (start + scan screens)
+  var heads=document.querySelectorAll(".calHeading");
+  for(var i=0;i<heads.length;i++){
+    heads[i].textContent = heading===null ? "—" : dirName(heading)+"（"+Math.round(heading)+"°）";
+  }
+}
+
+/* ---------- Camera sampling ---------- */
+var video=document.getElementById("video");
+var sCan=document.getElementById("sample"), sCtx=sCan.getContext("2d",{willReadFrequently:true});
+var stream=null, camOK=false, scanning=false, sampleTimer=null;
+var FOV_H=60, FOV_V=45;
+/* Darkness detection: at night the sky itself photographs dark, so the
+   brightness-based sky/obstruction split collapses and everything reads as
+   an obstruction (the user's night test came back all-NG). Track the mean
+   frame luminance and warn while it is too dark to judge. Hysteresis keeps
+   the banner from flickering near the threshold. */
+var lumSmooth=null, darkNow=false, lumTicks=0, darkTicks=0;
+var LUM_DARK=40, LUM_BRIGHT=65; // mean luminance (0-255): enter dark below 40, leave above 65
+function checkDark(){
+  if(lumSmooth===null) return;
+  if(!darkNow && lumSmooth<LUM_DARK){ darkNow=true; }
+  else if(darkNow && lumSmooth>LUM_BRIGHT){ darkNow=false; }
+  var el=document.getElementById("darkAlert");
+  if(el) el.classList.toggle("show", darkNow);
+}
+
+function isSkyPixel(r,g,b){
+  var mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+  var lum=0.2126*r+0.7152*g+0.0722*b;
+  var sat= mx===0?0:(mx-mn)/mx;
+  // blue sky: blue dominant
+  if(b>=r && b>=g-8 && b>90 && sat>0.12) return true;
+  // bright sky / cloud: bright and not very saturated
+  if(lum>165 && sat<0.28) return true;
+  // pale bright overall
+  if(lum>205 && sat<0.45) return true;
+  return false;
+}
+function sampleFrame(){
+  if(!camOK || heading===null || elevation===null) return;
+  if(elevationSigned!==null && elevationSigned<=0) return; // below the horizon: out of scan scope
+  var w=sCan.width,h=sCan.height;
+  try{ sCtx.drawImage(video,0,0,w,h); }catch(err){ return; }
+  var data;
+  try{ data=sCtx.getImageData(0,0,w,h).data; }catch(err){ return; }
+  var lumSum=0, lumN=0;
+  for(var y=0;y<h;y+=2){
+    for(var x=0;x<w;x+=2){
+      var p=(y*w+x)*4;
+      var r=data[p],g=data[p+1],b=data[p+2];
+      lumSum+=0.2126*r+0.7152*g+0.0722*b; lumN++;
+      var az=heading + ((x/(w-1))-0.5)*FOV_H;
+      var el=elevation + (0.5-(y/(h-1)))*FOV_V;
+      if(el<0||el>90) continue;
+      var i=idx(az,el);
+      if(isSkyPixel(r,g,b)) skyV[i]+=1; else obsV[i]+=1;
+    }
+  }
+  if(lumN>0){
+    var meanLum=lumSum/lumN;
+    lumSmooth = lumSmooth===null ? meanLum : lumSmooth*0.6+meanLum*0.4;
+    checkDark();
+  }
+}
+function scanTick(){
+  sampleFrame();
+  if(camOK){ lumTicks++; if(darkNow) darkTicks++; } // share of this scan spent too dark (for the result-screen caution)
+  refreshScanUI();
+}
+function stampManual(isObs){
+  if(heading===null || elevation===null){
+    showErr("scanErr","センサーの方位・高度が取得できていません。端末を少し動かしてから、もう一度お試しください。");
+    return;
+  }
+  if(elevationSigned!==null && elevationSigned<=0){
+    showErr("scanErr","水平より下を向いているため記録できません。スマホを空に向けてください。");
+    return;
+  }
+  // stamp current view across FOV with strong weight
+  for(var da=-FOV_H/2; da<=FOV_H/2; da+=5){
+    for(var de=-FOV_V/2; de<=FOV_V/2; de+=5){
+      var el=elevation+de; if(el<0||el>90) continue;
+      var i=idx(heading+da, el);
+      if(isObs){ obsV[i]+=30; } else { skyV[i]+=30; }
+    }
+  }
+  var cw=document.getElementById("camwrap");
+  cw.classList.remove("flash"); void cw.offsetWidth; cw.classList.add("flash");
+  refreshScanUI();
+}
+
+/* ---------- Sky map ---------- */
+function drawMap(canvas){
+  var ctx=canvas.getContext("2d");
+  var W=canvas.width, C=W/2, R=C-28;
+  var rot=currentRot(); // 0 in north-up mode; the user's heading in heading-up mode
+  var dark=window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  ctx.clearRect(0,0,W,W);
+  // background disc
+  ctx.beginPath(); ctx.arc(C,C,R,0,Math.PI*2);
+  ctx.fillStyle=dark?"#101820":"#e9edf1"; ctx.fill();
+  for(var a=0;a<AZ_BINS;a++){
+    for(var e=0;e<EL_BINS;e++){
+      var elC=e*5+2.5;
+      var rOuter=(90-(e*5))/90*R, rInner=(90-(e*5+5))/90*R;
+      var a0=((a*5)-rot-90)*Math.PI/180, a1=(((a+1)*5)-rot-90)*Math.PI/180;
+      var st=cellState(a*EL_BINS+e);
+      ctx.beginPath();
+      ctx.arc(C,C,rOuter,a0,a1);
+      ctx.arc(C,C,rInner,a1,a0,true);
+      ctx.closePath();
+      if(st===1){
+        var i2=a*EL_BINS+e, t=skyV[i2]+obsV[i2];
+        var ratio=t? obsV[i2]/t:0;
+        ctx.fillStyle = ratio>0.25 ? "#7fb069" : "#1d9e6c";
+      } else if(st===2){ ctx.fillStyle="#d84a3a"; }
+      else { ctx.fillStyle=dark?"#26333f":"#ccd4dc"; }
+      ctx.fill();
+    }
+  }
+  // 25deg dashed boundary
+  var r25=(90-25)/90*R;
+  ctx.beginPath(); ctx.arc(C,C,r25,0,Math.PI*2);
+  ctx.setLineDash([8,7]); ctx.lineWidth=3; ctx.strokeStyle=dark?"#ffd166":"#8a5a00"; ctx.stroke(); ctx.setLineDash([]);
+  // rings + spokes
+  ctx.lineWidth=1; ctx.strokeStyle=dark?"rgba(255,255,255,.18)":"rgba(20,32,43,.15)";
+  [30,60].forEach(function(el){ ctx.beginPath(); ctx.arc(C,C,(90-el)/90*R,0,Math.PI*2); ctx.stroke(); });
+  for(var k=0;k<8;k++){
+    var th=(k*45-rot-90)*Math.PI/180;
+    ctx.beginPath(); ctx.moveTo(C,C); ctx.lineTo(C+Math.cos(th)*R, C+Math.sin(th)*R); ctx.stroke();
+  }
+  ctx.beginPath(); ctx.arc(C,C,R,0,Math.PI*2); ctx.lineWidth=2; ctx.strokeStyle=dark?"#5b7185":"#8fa1b1"; ctx.stroke();
+  // labels (cardinal labels rotate together with the map in heading-up mode)
+  ctx.fillStyle=dark?"#e8eef3":"#14202b"; ctx.font="bold 30px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
+  var labelR=R+12;
+  [["北",0],["東",90],["南",180],["西",270]].forEach(function(cd){
+    var ang=(cd[1]-rot-90)*Math.PI/180;
+    ctx.fillText(cd[0], C+Math.cos(ang)*labelR, C+Math.sin(ang)*labelR);
+  });
+  ctx.font="20px sans-serif"; ctx.fillStyle=dark?"#ffd166":"#8a5a00";
+  ctx.fillText("25°", C+r25*0.7071+16, C-r25*0.7071-6);
+  // current direction marker (in heading-up mode it stays on the vertical line toward the top)
+  var scanVisible=!document.getElementById("screen-scan").classList.contains("hidden");
+  var resultVisible=!document.getElementById("screen-result").classList.contains("hidden");
+  var thisVisible = canvas.id==="skymap" ? scanVisible : resultVisible;
+  if(heading!==null && elevation!==null && thisVisible){
+    var rr=(90-elevation)/90*R, tt=(heading-rot-90)*Math.PI/180;
+    var mx=C+Math.cos(tt)*rr, my=C+Math.sin(tt)*rr;
+    ctx.beginPath(); ctx.arc(mx,my,11,0,Math.PI*2); ctx.fillStyle="#ffd166"; ctx.fill();
+    ctx.lineWidth=3; ctx.strokeStyle="#14202b"; ctx.stroke();
+  }
+}
+
+/* ---------- Camera overlay (scanned = live video, unscanned = gray) ---------- */
+function sizeOverlay(){
+  var c=document.getElementById("overlay"), w=document.getElementById("camwrap");
+  if(!c||!w) return;
+  var r=w.getBoundingClientRect();
+  if(r.width>0 && r.height>0){ c.width=Math.round(r.width); c.height=Math.round(r.height); }
+}
+function drawOverlay(){
+  var c=document.getElementById("overlay");
+  if(!c) return;
+  var ctx=c.getContext("2d");
+  var W=c.width, H=c.height;
+  var badge=document.getElementById("scopeOut");
+  ctx.clearRect(0,0,W,H);
+  if(!camOK){ if(badge) badge.classList.add("hidden"); return; }
+  var below=(elevationSigned!==null && elevationSigned<=0);
+  if(badge) badge.classList.toggle("hidden", !below);
+  var cols=Math.max(16, Math.round(W/18)), rows=Math.max(16, Math.round(H/18));
+  var bw=W/cols, bh=H/rows;
+  for(var bj=0; bj<rows; bj++){
+    for(var bi=0; bi<cols; bi++){
+      var cx=(bi+0.5)*bw, cy=(bj+0.5)*bh;
+      var fill=null;
+      if(below || heading===null || elevation===null){
+        fill = below ? "rgba(38,44,50,0.88)" : "rgba(120,130,140,0.82)";
+      } else {
+        var az=heading + ((cx/W)-0.5)*FOV_H;
+        var el=elevation + (0.5-(cy/H))*FOV_V;
+        if(el<0){ fill="rgba(38,44,50,0.88)"; } // below the horizon: out of scope
+        else if(el>90){ fill="rgba(120,130,140,0.82)"; }
+        else if(cellState(idx(az,el))===0){ fill="rgba(120,130,140,0.82)"; } // not scanned yet
+        // scanned cells stay transparent so the live camera image shows through
+      }
+      if(fill){ ctx.fillStyle=fill; ctx.fillRect(bi*bw, bj*bh, bw+1, bh+1); }
+    }
+  }
+}
+
+/* ---------- Map orientation mode ---------- */
+function setMapMode(m){
+  mapMode=m;
+  var pairs=[["modeNorthScan","north"],["modeHeadScan","heading"],["modeNorthResult","north"],["modeHeadResult","heading"]];
+  pairs.forEach(function(p){
+    var el=document.getElementById(p[0]);
+    if(!el) return;
+    var on=p[1]===m;
+    el.classList.toggle("active",on);
+    el.setAttribute("aria-pressed", on?"true":"false");
+  });
+  var topLabel = m==="heading" ? "上＝今向いている方角" : "上＝北";
+  var ls=document.getElementById("legendTopScan"); if(ls) ls.textContent=topLabel;
+  var lr=document.getElementById("legendTopResult"); if(lr) lr.textContent=topLabel;
+  drawMap(document.getElementById("skymap"));
+  drawMap(document.getElementById("skymap2"));
+}
+
+/* ---------- UI refresh ---------- */
+function refreshScanUI(){
+  var s=computeStats();
+  document.getElementById("covBar").style.width=Math.round(s.coverage*100)+"%";
+  document.getElementById("covLabel").textContent=Math.round(s.coverage*100)+"%";
+  var g=document.getElementById("guide");
+  if(darkNow){ g.innerHTML="今は<b>暗すぎて判定できません</b>。夜間・暗所では空も障害物と誤判定されます。明るい時間帯に測り直してください。"; }
+  else if(elevationSigned!==null && elevationSigned<=0){ g.innerHTML="今は<b>水平より下</b>を向いています。この向きはスキャン対象外です。空に向け直してください。"; }
+  else if(s.coverage>=0.95){ g.innerHTML="必要範囲はほぼスキャンできました。<b>「結果を見る」</b>へ進んでください。"; }
+  else if(s.coverage>=0.6){ g.innerHTML="いい調子です。残りの<b>灰色の範囲</b>に向けて、ゆっくり動かしてください。"; }
+  drawMap(document.getElementById("skymap"));
+  drawOverlay();
+}
+
+/* ---------- Errors ---------- */
+function showErr(id,msg){ var el=document.getElementById(id); el.textContent=msg; el.classList.add("show"); }
+function hideErr(id){ document.getElementById(id).classList.remove("show"); }
+
+/* ---------- Permissions ---------- */
+/* iPhone permission failures are usually environmental, not a page bug:
+   (1) iOS blocks camera/motion inside embedded (iframe / in-app) views, often
+       without ever showing a prompt;
+   (2) if "Motion & Orientation Access" is off in the iOS Settings for the
+       browser, requestPermission() resolves "denied" with no dialog;
+   (3) once the camera is denied, the prompt never appears again until the
+       site setting is changed manually.
+   Detect the environment up front so the page can show the right fix. */
+function detectEnv(){
+  var ua=navigator.userAgent||"";
+  var isIOS=/iPhone|iPad|iPod/.test(ua) || (navigator.platform==="MacIntel" && (navigator.maxTouchPoints||0)>1);
+  var inFrame=false;
+  try{ inFrame = window.self!==window.top; }catch(e){ inFrame=true; }
+  return { isIOS:isIOS, inFrame:inFrame, secure:(window.isSecureContext===true) };
+}
+var ENV=detectEnv();
+function envHint(){
+  var h="";
+  if(ENV.inFrame) h+=" アプリ内表示ではiPhoneが権限をブロックすることがあります。リンクをSafariで直接開いて試してください。";
+  if(ENV.isIOS) h+=" 下の「iPhoneで許可が取れないとき」の手順も確認してください。";
+  if(!ENV.secure) h+=" このページがHTTPSで開かれていないため、カメラとセンサーは使えません。";
+  return h;
+}
+var camGranted=false, oriGranted=false;
+function updateStartBtn(){
+  document.getElementById("btnStart").disabled = !(camGranted||oriGranted);
+  if(camGranted){ var s=document.getElementById("stCam"); s.textContent="許可済み"; document.getElementById("btnCam").classList.add("done"); }
+  if(oriGranted){ var s2=document.getElementById("stOri"); s2.textContent="許可済み"; document.getElementById("btnOri").classList.add("done"); }
+}
+document.getElementById("btnCam").addEventListener("click",function(){
+  hideErr("startErr");
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    showErr("startErr","このブラウザではカメラ機能自体が提供されていません。"+envHint()+"センサーのみのスキャン＋手動記録は可能です。");
+    return;
+  }
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"}},audio:false})
+  .then(function(st){
+    stream=st; video.srcObject=st; camOK=true; camGranted=true;
+    video.play().catch(function(){});
+    updateStartBtn();
+  })
+  .catch(function(err){
+    var name=err&&err.name?err.name:"エラー";
+    var msg;
+    if(name==="NotAllowedError" || name==="SecurityError"){
+      msg="カメラの許可が得られませんでした（"+name+"）。以前に「許可しない」を選んだ場合、ダイアログは再表示されません。ブラウザのサイト設定でカメラを許可し直してください。";
+    } else if(name==="NotFoundError" || name==="OverconstrainedError"){
+      msg="使えるカメラが見つかりませんでした（"+name+"）。";
+    } else if(name==="NotReadableError"){
+      msg="カメラを他のアプリが使用中のため開けませんでした（"+name+"）。他のカメラアプリを閉じてから再試行してください。";
+    } else {
+      msg="カメラの許可が得られませんでした（"+name+"）。";
+    }
+    showErr("startErr",msg+envHint()+" 許可できない場合も、センサー＋手動記録でチェックは可能です。");
+  });
+});
+document.getElementById("btnOri").addEventListener("click",function(){
+  hideErr("startErr");
+  function attach(){
+    window.addEventListener("deviceorientation",onOrientation,true);
+    window.addEventListener("deviceorientationabsolute",onOrientation,true);
+    oriGranted=true; updateStartBtn();
+    setTimeout(function(){
+      if(!hasOrientation){
+        var m="センサーの値がまだ届いていません。端末を少し動かしてみてください。";
+        if(ENV.isIOS) m+=" iPhoneで許可したのに値が来ない場合は、このページを再読み込みしてもう一度ボタンを押すと届くことがあります。それでもダメなときは「設定 →（使っているブラウザ）→ モーションと方向へのアクセス」がオンか確認してください。";
+        m+=" 値が取れない端末では、方位・高度が表示されず手動記録も使えません。";
+        showErr("startErr",m);
+      }
+    },2500);
+  }
+  if(typeof DeviceOrientationEvent!=="undefined" && typeof DeviceOrientationEvent.requestPermission==="function"){
+    // iOS 13+: the request must start inside the tap handler. Ask for both
+    // orientation and motion in the same gesture; some iOS versions gate the
+    // orientation events behind the motion permission as well.
+    var reqs=[DeviceOrientationEvent.requestPermission()];
+    if(typeof DeviceMotionEvent!=="undefined" && typeof DeviceMotionEvent.requestPermission==="function"){
+      reqs.push(DeviceMotionEvent.requestPermission().catch(function(){ return "denied"; }));
+    }
+    Promise.all(reqs).then(function(res){
+      if(res[0]==="granted"){ attach(); }
+      else{ showErr("startErr","モーションセンサーの許可が得られませんでした。ダイアログが出なかった場合は、iPhoneの「設定 → Safari（または使っているブラウザ）→ モーションと方向へのアクセス」がオフになっている可能性が高いです。オンにしてページを再読み込みし、もう一度ボタンを押してください。"+envHint()); }
+    }).catch(function(){ showErr("startErr","モーションセンサーの許可リクエストに失敗しました。ページを再読み込みして、ボタンを押し直してください。"+envHint()); });
+  } else if(typeof DeviceOrientationEvent!=="undefined"){
+    attach();
+  } else {
+    showErr("startErr","この端末・ブラウザではモーションセンサーが使えません。方位・高度ベースのスキャンはできません。"+envHint());
+  }
+});
+
+/* ---------- Flow ---------- */
+function show(screen){
+  ["screen-start","screen-scan","screen-result"].forEach(function(id){
+    document.getElementById(id).classList.toggle("hidden", id!==screen);
+  });
+  window.scrollTo(0,0);
+}
+document.getElementById("btnStart").addEventListener("click",function(){
+  show("screen-scan");
+  sizeOverlay();
+  document.getElementById("nocam").classList.toggle("hidden", camOK);
+  if(!camOK && !hasOrientation){
+    showErr("scanErr","カメラもセンサーも使えていないため、計測できません。最初の画面に戻って許可を取り直してください。");
+  } else if(!camOK){
+    showErr("scanErr","カメラなしモードです：スマホを向けた方向を、下の手動ボタンで記録してください。");
+  } else if(!hasOrientation){
+    showErr("scanErr","センサーの値が取れていません。端末を8の字に動かすとコンパスが補正されることがあります。");
+  }
+  scanning=true;
+  if(sampleTimer) clearInterval(sampleTimer);
+  sampleTimer=setInterval(scanTick,300);
+  refreshScanUI();
+});
+document.getElementById("btnMarkObs").addEventListener("click",function(){ stampManual(true); });
+document.getElementById("btnMarkSky").addEventListener("click",function(){ stampManual(false); });
+
+document.getElementById("btnFinish").addEventListener("click",function(){
+  scanning=false; if(sampleTimer) clearInterval(sampleTimer);
+  // if a large share of this scan was measured in the dark, flag the verdict as unreliable
+  var darkNote=document.getElementById("darkResultNote");
+  if(darkNote) darkNote.classList.toggle("show", lumTicks>=10 && darkTicks/lumTicks>=0.4);
+  var s=computeStats();
+  document.getElementById("statCov").textContent=Math.round(s.coverage*100)+"%";
+  document.getElementById("statObs").textContent= s.scanned? Math.round(s.obstruction*100)+"%":"—";
+  var box=document.getElementById("verdictBox"), big=document.getElementById("verdictBig"), txt=document.getElementById("verdictText");
+  box.className="verdict";
+  if(s.scanned===0){
+    box.classList.add("mid"); big.textContent="判定できません";
+    txt.textContent="必要範囲（高度25°以上）がまだスキャンされていません。再スキャンして、真上〜周囲をまんべんなく記録してください。";
+  } else if(s.coverage<0.5){
+    var provisional = s.obstruction<=0.05?"設置OK寄り":(s.obstruction<=0.15?"微妙":"厳しい");
+    box.classList.add("mid"); big.textContent="暫定："+provisional;
+    txt.textContent="カバー率が"+Math.round(s.coverage*100)+"%と低く、判定の信頼性は低めです。未スキャンの範囲を埋めてから再判定するのがおすすめです。";
+  } else if(s.obstruction<=0.05){
+    box.classList.add("ok"); big.textContent="設置OK";
+    txt.textContent="必要範囲内の障害物はわずかです。この場所は見通しが良く、Starlinkの設置に向いていると考えられます。";
+  } else if(s.obstruction<=0.15){
+    box.classList.add("mid"); big.textContent="微妙";
+    txt.textContent="障害物がややあります。時間帯によって通信が途切れる可能性があります。アンテナを少し高くする／位置をずらすと改善する場合があります。";
+  } else {
+    box.classList.add("ng"); big.textContent="厳しい";
+    txt.textContent="必要範囲内の障害物が多めです。この場所では通信が頻繁に途切れる可能性があります。より開けた場所や、高い位置への設置を検討してください。";
+  }
+  // direction summary
+  var parts=[];
+  for(var d=0;d<8;d++){
+    if(s.dirScan[d]>0 && s.dirObs[d]/s.dirScan[d]>=0.4){ parts.push(DIRS[d]+"の方角"); }
+  }
+  document.getElementById("dirSummary").textContent = parts.length?
+    "障害物が目立つ方角："+parts.join("、")+"。この方角の建物・樹木が主な遮りです。":
+    (s.scanned? "特定の方角に偏った障害物は目立ちません。":"");
+  drawMap(document.getElementById("skymap2"));
+  show("screen-result");
+});
+function resetAll(){
+  skyV=new Float32Array(AZ_BINS*EL_BINS);
+  obsV=new Float32Array(AZ_BINS*EL_BINS);
+  if(sampleTimer) clearInterval(sampleTimer);
+  scanning=false;
+  lumSmooth=null; darkNow=false; lumTicks=0; darkTicks=0;
+  var da=document.getElementById("darkAlert"); if(da) da.classList.remove("show");
+  var dn=document.getElementById("darkResultNote"); if(dn) dn.classList.remove("show");
+  hideErr("scanErr");
+  show("screen-start");
+}
+document.getElementById("btnReset1").addEventListener("click",resetAll);
+document.getElementById("btnReset2").addEventListener("click",resetAll);
+document.getElementById("btnRescan").addEventListener("click",function(){
+  show("screen-scan");
+  sizeOverlay();
+  scanning=true;
+  if(sampleTimer) clearInterval(sampleTimer);
+  sampleTimer=setInterval(scanTick,300);
+  refreshScanUI();
+});
+document.getElementById("modeNorthScan").addEventListener("click",function(){ setMapMode("north"); });
+document.getElementById("modeHeadScan").addEventListener("click",function(){ setMapMode("heading"); });
+document.getElementById("modeNorthResult").addEventListener("click",function(){ setMapMode("north"); });
+document.getElementById("modeHeadResult").addEventListener("click",function(){ setMapMode("heading"); });
+// calibration controls exist on both the start and scan screens; wire them all
+Array.prototype.forEach.call(document.querySelectorAll(".calbtn"),function(b){
+  b.addEventListener("click",function(){ adjustOffset(parseInt(b.getAttribute("data-delta"),10)||0); });
+});
+Array.prototype.forEach.call(document.querySelectorAll(".calreset"),function(b){
+  b.addEventListener("click",function(){ adjustOffset(10-headingOffset); });
+});
+window.addEventListener("resize",function(){ if(scanning){ sizeOverlay(); drawOverlay(); } });
+// iPhone: show the troubleshooting card (and the in-app-view warning when embedded)
+if(ENV.isIOS){
+  var ih=document.getElementById("iosHelp"); if(ih) ih.classList.remove("hidden");
+  if(ENV.inFrame){ var fn=document.getElementById("iosFrameNote"); if(fn) fn.classList.remove("hidden"); }
+}
+updateCalUI();
+drawMap(document.getElementById("skymap"));
+})();
+</script>
+</body>
+</html>
