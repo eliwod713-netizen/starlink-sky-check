@@ -63,6 +63,26 @@
   .framewarn b{color:var(--warn)}
   .hidden{display:none !important}
 
+  /* Step flow indicator */
+  .flowsteps{display:flex;gap:2px;list-style:none;margin:2px 0 14px;padding:0}
+  .flowsteps li{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--muted);text-align:center;line-height:1.3}
+  .flowsteps .dot{width:26px;height:26px;border-radius:50%;background:var(--surface2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--muted)}
+  .flowsteps li.done .dot{background:var(--ok);border-color:var(--ok);color:#fff}
+  .flowsteps li.active .dot{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+  .flowsteps li.active{color:var(--ink);font-weight:700}
+
+  /* Compass dial (calibration screen) */
+  .dialwrap{display:flex;flex-direction:column;align-items:center;gap:10px;margin:8px 0 4px}
+  .dial{position:relative;width:160px;height:160px;border-radius:50%;border:2px solid var(--line);background:var(--surface2);flex:0 0 auto}
+  .dial .dcard{position:absolute;transform:translate(-50%,-50%);font-weight:800;font-size:15px;color:var(--muted)}
+  .dial .dcard.n{top:16px;left:50%;color:var(--bad);font-size:18px}
+  .dial .dcard.e{top:50%;left:calc(100% - 16px)}
+  .dial .dcard.s{top:calc(100% - 16px);left:50%}
+  .dial .dcard.w{top:50%;left:16px}
+  .dial .needle{position:absolute;left:50%;top:50%;width:5px;height:60px;background:var(--bad);border-radius:3px;transform-origin:50% 100%;transform:translate(-50%,-100%) rotate(0deg)}
+  .dial .dcenter{position:absolute;left:50%;top:50%;width:12px;height:12px;border-radius:50%;background:var(--ink);transform:translate(-50%,-50%)}
+  .northStatus.isnorth{color:var(--ok)}
+
   /* Scan screen */
   .camwrap{position:relative;border-radius:16px;overflow:hidden;background:#000;aspect-ratio:3/4;max-height:62vh;width:100%}
   @media (min-width:560px){.camwrap{aspect-ratio:4/3}}
@@ -119,29 +139,46 @@
 <body>
 <div class="wrap">
 
-  <!-- ===== Start screen ===== -->
-  <section id="screen-start">
+  <!-- ===== Step 1: Intro ===== -->
+  <section id="screen-intro">
+    <ol class="flowsteps" data-cur="1"><li><span class="dot">1</span>概要</li><li><span class="dot">2</span>権限取得</li><li><span class="dot">3</span>方位補正</li><li><span class="dot">4</span>スキャン</li><li><span class="dot">5</span>結果</li></ol>
     <h1>Starlink 見通しチェック</h1>
     <p class="lead">設置したい場所でスマホを空に向け、ゆっくり一周させてスキャンするだけ。上空がどれだけ開けていて、建物や木などの障害物がどれくらいあるかをその場で判定します。旧公式アプリの「障害物チェック」の代替として作ったWeb版です。</p>
 
-    <div class="err" id="startErr" role="alert"></div>
-
     <div class="card">
-      <h2>やり方</h2>
+      <h2>やり方（5ステップ）</h2>
       <ol class="steps">
-        <li><span class="num">1</span><p>アンテナを置きたい場所に立つ<small>屋根の上など、実際に設置する高さ・位置が理想です</small></p></li>
-        <li><span class="num">2</span><p>下のボタンでカメラとモーションセンサーを許可する<small>映像とデータはこの端末の中だけで処理され、外部に送信されません</small></p></li>
-        <li><span class="num">3</span><p>スマホを空に向けて、ゆっくり全方向をなめるように動かす<small>真上から地平線近くまで、方位360°をまんべんなく。目安は1〜2分です。カメラ映像上で灰色の部分が未スキャン、映像が見える部分がスキャン済みです。水平より下を向いている間は記録されません</small></p></li>
-        <li><span class="num">4</span><p>スカイマップと判定を確認する<small>高度25°以上の範囲がStarlinkの通信に必要な視野の目安です</small></p></li>
+        <li><span class="num">1</span><p>アンテナを置きたい場所に立つ<small>屋根の上など、実際に設置する高さ・位置が理想です。この画面で概要と操作の流れを確認します</small></p></li>
+        <li><span class="num">2</span><p>カメラとモーションセンサーを許可する<small>次の画面で許可を取ります。映像とデータはこの端末の中だけで処理され、外部に送信されません</small></p></li>
+        <li><span class="num">3</span><p>北を向いて、コンパス（方位）を補正する<small>北を向いた状態で方位の表示を合わせます。初期値として+10°の補正が入っています</small></p></li>
+        <li><span class="num">4</span><p>スマホを空に向けて、ゆっくり全方向をなめるようにスキャンする<small>真上から地平線近くまで、方位360°をまんべんなく。目安は1〜2分です。カメラ映像上で灰色の部分が未スキャン、映像が見える部分がスキャン済みです。水平より下を向いている間は記録されません</small></p></li>
+        <li><span class="num">5</span><p>スカイマップと判定を確認する<small>高度25°以上の範囲がStarlinkの通信に必要な視野の目安です</small></p></li>
       </ol>
     </div>
+
+    <div class="card">
+      <h2>判定の考え方</h2>
+      <p style="margin:0;font-size:14.5px">カメラ映像の明るさと色から「空」と「障害物」を自動で見分け、方位（5°刻み）×高度（5°刻み）のマス目に記録します。高度25°以上の必要範囲について、スキャン済みの割合（カバー率）と、その中の障害物の割合で判定します。判定基準は実用上の目安で、SpaceX公式の基準ではありません。</p>
+      <p style="margin:10px 0 0;font-size:14.5px">夜間や暗い場所では空自体が暗く映り、障害物と誤判定されやすくなります。そのため、映像が暗い間はスキャン画面に警告が出ます。できるだけ明るい時間帯に測ってください。</p>
+    </div>
+
+    <button class="btn primary" id="btnToPerm">次へ：権限の取得へ</button>
+  </section>
+
+  <!-- ===== Step 2: Permissions ===== -->
+  <section id="screen-perm" class="hidden">
+    <ol class="flowsteps" data-cur="2"><li><span class="dot">1</span>概要</li><li><span class="dot">2</span>権限取得</li><li><span class="dot">3</span>方位補正</li><li><span class="dot">4</span>スキャン</li><li><span class="dot">5</span>結果</li></ol>
+    <h1 style="font-size:20px">権限の取得</h1>
+    <p class="lead">スキャンに使うカメラとモーションセンサーの許可を取ります。どちらか一方だけでも次へ進めます。</p>
+
+    <div class="err" id="startErr" role="alert"></div>
 
     <div class="card">
       <h2>許可の取得</h2>
       <div class="stack">
         <button class="btn" id="btnCam">📷 カメラを許可する <span class="st" id="stCam">未許可</span></button>
         <button class="btn" id="btnOri">🧭 モーションセンサーを許可する <span class="st" id="stOri">未許可</span></button>
-        <button class="btn primary" id="btnStart" disabled>スキャンを開始する</button>
+        <button class="btn primary" id="btnStart" disabled>次へ：方位の補正へ</button>
       </div>
       <p class="note" style="margin:10px 0 0">※ このページはHTTPSで開いてください（カメラとセンサーはHTTPS必須です）。センサーが使えない端末では、カメラ映像だけでもスキャンでき、手動ボタンで記録できます。</p>
     </div>
@@ -157,11 +194,34 @@
       </ol>
     </div>
 
+    <button class="btn" id="btnBackIntro">戻る（概要へ）</button>
+  </section>
+
+  <!-- ===== Step 3: Calibration (face north, adjust compass) ===== -->
+  <section id="screen-cal" class="hidden">
+    <ol class="flowsteps" data-cur="3"><li><span class="dot">1</span>概要</li><li><span class="dot">2</span>権限取得</li><li><span class="dot">3</span>方位補正</li><li><span class="dot">4</span>スキャン</li><li><span class="dot">5</span>結果</li></ol>
+    <h1 style="font-size:20px">方位の補正</h1>
+    <p class="lead">スキャンを始める前に、コンパスの向きを合わせます。まず体の向きを北に合わせてください。</p>
+
+    <div class="card">
+      <h2>北を向いてください</h2>
+      <p class="note" style="margin:0">下の円の針は、北が今どちらにあるかを示します。針が真上（N）を指すように、体の向きをゆっくり回してください。</p>
+      <div class="dialwrap">
+        <div class="dial" aria-hidden="true">
+          <span class="dcard n">N</span><span class="dcard e">E</span><span class="dcard s">S</span><span class="dcard w">W</span>
+          <div class="needle"></div><div class="dcenter"></div>
+        </div>
+        <p class="northStatus" style="margin:0;font-size:14.5px;font-weight:600;text-align:center">—</p>
+        <p style="margin:0;font-size:15px">今向いている方位：<b class="calHeading">—</b></p>
+      </div>
+      <p class="note" style="margin:0">コンパスが不安定なときは、スマホを8の字に数回振ると安定することがあります。磁石付きケースや金属の近くではずれることがあります。</p>
+    </div>
+
     <div class="card">
       <h2>方位の補正</h2>
-      <p class="note" style="margin:0 0 10px">コンパスの表示がずれている場合の調整です。初期値として時計回りに <b>+10°</b> の補正が入っています。モーションセンサーを許可すると下に今の方位が出るので、方角の分かっている方向（例：南）を向いて、表示が実際と合うまでボタンで調整してください。スキャン画面でも同じ調整ができます（進捗バー・手動記録の下、スカイマップの上にあります）。</p>
+      <p class="note" style="margin:0 0 10px">コンパスの表示がずれている場合の調整です。初期値として時計回りに <b>+10°</b> の補正が入っています。上の手順で北を向いた状態で、下の「今向いている方位」が北（0°）になるようボタンで調整してください。北が分かりにくい場合は、方角の分かっている方向（例：南）を向いて確認しても構いません。スキャン画面でも同じ調整ができます。</p>
       <p style="margin:0 0 10px;font-size:15px">今向いている方位：<b class="calHeading">—</b></p>
-      <div class="calrow" role="group" aria-label="方位補正の調整（開始画面）">
+      <div class="calrow" role="group" aria-label="方位補正の調整（方位補正画面）">
         <button type="button" class="btn calbtn" data-delta="-5">−5°</button>
         <button type="button" class="btn calbtn" data-delta="-1">−1°</button>
         <div class="calval"><span class="v calValText">+10°</span><span class="k">現在の補正</span></div>
@@ -172,15 +232,15 @@
       <p class="note" style="margin:10px 0 0">＋は時計回り、−は反時計回りへの補正です。</p>
     </div>
 
-    <div class="card">
-      <h2>判定の考え方</h2>
-      <p style="margin:0;font-size:14.5px">カメラ映像の明るさと色から「空」と「障害物」を自動で見分け、方位（5°刻み）×高度（5°刻み）のマス目に記録します。高度25°以上の必要範囲について、スキャン済みの割合（カバー率）と、その中の障害物の割合で判定します。判定基準は実用上の目安で、SpaceX公式の基準ではありません。</p>
-      <p style="margin:10px 0 0;font-size:14.5px">夜間や暗い場所では空自体が暗く映り、障害物と誤判定されやすくなります。そのため、映像が暗い間はスキャン画面に警告が出ます。できるだけ明るい時間帯に測ってください。</p>
+    <div class="stack">
+      <button class="btn primary" id="btnBeginScan">スキャンを開始する</button>
+      <button class="btn" id="btnBackPerm">戻る（権限の取得へ）</button>
     </div>
   </section>
 
-  <!-- ===== Scan screen ===== -->
+  <!-- ===== Step 4: Scan ===== -->
   <section id="screen-scan" class="hidden">
+    <ol class="flowsteps" data-cur="4"><li><span class="dot">1</span>概要</li><li><span class="dot">2</span>権限取得</li><li><span class="dot">3</span>方位補正</li><li><span class="dot">4</span>スキャン</li><li><span class="dot">5</span>結果</li></ol>
     <h1 style="font-size:20px">空をスキャン中</h1>
     <div class="err" id="scanErr" role="alert"></div>
     <div class="darkalert" id="darkAlert" role="alert">
@@ -229,7 +289,7 @@
         <button type="button" class="btn calbtn" data-delta="5">+5°</button>
       </div>
       <button type="button" class="btn calreset" style="margin-top:10px">補正を初期値（+10°）に戻す</button>
-      <p class="note" style="margin:10px 0 0">＋は時計回り、−は反時計回りへの補正です。端末やケースの磁気の影響で最適な補正量は変わることがあります。最初の画面でも同じ設定ができます。</p>
+      <p class="note" style="margin:10px 0 0">＋は時計回り、−は反時計回りへの補正です。端末やケースの磁気の影響で最適な補正量は変わることがあります。前の「方位の補正」画面でも同じ設定ができます。</p>
     </div>
 
     <div class="card">
@@ -256,6 +316,7 @@
 
   <!-- ===== Result screen ===== -->
   <section id="screen-result" class="hidden">
+    <ol class="flowsteps" data-cur="5"><li><span class="dot">1</span>概要</li><li><span class="dot">2</span>権限取得</li><li><span class="dot">3</span>方位補正</li><li><span class="dot">4</span>スキャン</li><li><span class="dot">5</span>結果</li></ol>
     <h1 style="font-size:20px">チェック結果</h1>
 
     <div class="verdict" id="verdictBox">
@@ -443,10 +504,28 @@ function updateHUD(){
   document.getElementById("hudAz").textContent = heading===null?"—":Math.round(heading)+"°";
   document.getElementById("hudEl").textContent = elevationSigned===null?"—":Math.round(elevationSigned)+"°";
   document.getElementById("hudDir").textContent = heading===null?"—":dirName(heading);
-  // live heading readouts next to the calibration controls (start + scan screens)
+  // live heading readouts next to the calibration controls (calibration + scan screens)
   var heads=document.querySelectorAll(".calHeading");
   for(var i=0;i<heads.length;i++){
     heads[i].textContent = heading===null ? "—" : dirName(heading)+"（"+Math.round(heading)+"°）";
+  }
+  // calibration screen: compass needle (points toward north) + "facing north" status
+  var needles=document.querySelectorAll(".needle");
+  for(var ni=0;ni<needles.length;ni++){
+    needles[ni].style.transform = "translate(-50%,-100%) rotate("+(-(heading||0))+"deg)";
+  }
+  var nss=document.querySelectorAll(".northStatus");
+  for(var nj=0;nj<nss.length;nj++){
+    if(heading===null){
+      nss[nj].textContent="センサーの値がまだ届いていません。端末を少し動かしてください。";
+      nss[nj].classList.remove("isnorth");
+    } else if(Math.min(heading,360-heading)<=10){
+      nss[nj].textContent="北を向いています。この向きで、下の補正を確認してください。";
+      nss[nj].classList.add("isnorth");
+    } else {
+      nss[nj].textContent="今は"+dirName(heading)+"を向いています。針が真上（N）を指すまで体の向きを回してください。";
+      nss[nj].classList.remove("isnorth");
+    }
   }
 }
 
@@ -764,17 +843,21 @@ document.getElementById("btnOri").addEventListener("click",function(){
 
 /* ---------- Flow ---------- */
 function show(screen){
-  ["screen-start","screen-scan","screen-result"].forEach(function(id){
+  ["screen-intro","screen-perm","screen-cal","screen-scan","screen-result"].forEach(function(id){
     document.getElementById(id).classList.toggle("hidden", id!==screen);
   });
   window.scrollTo(0,0);
 }
-document.getElementById("btnStart").addEventListener("click",function(){
+document.getElementById("btnToPerm").addEventListener("click",function(){ show("screen-perm"); });
+document.getElementById("btnBackIntro").addEventListener("click",function(){ show("screen-intro"); });
+document.getElementById("btnStart").addEventListener("click",function(){ show("screen-cal"); });
+document.getElementById("btnBackPerm").addEventListener("click",function(){ show("screen-perm"); });
+document.getElementById("btnBeginScan").addEventListener("click",function(){
   show("screen-scan");
   sizeOverlay();
   document.getElementById("nocam").classList.toggle("hidden", camOK);
   if(!camOK && !hasOrientation){
-    showErr("scanErr","カメラもセンサーも使えていないため、計測できません。最初の画面に戻って許可を取り直してください。");
+    showErr("scanErr","カメラもセンサーも使えていないため、計測できません。リセットして「権限の取得」の画面に戻り、許可を取り直してください。");
   } else if(!camOK){
     showErr("scanErr","カメラなしモードです：スマホを向けた方向を、下の手動ボタンで記録してください。");
   } else if(!hasOrientation){
@@ -835,7 +918,7 @@ function resetAll(){
   var da=document.getElementById("darkAlert"); if(da) da.classList.remove("show");
   var dn=document.getElementById("darkResultNote"); if(dn) dn.classList.remove("show");
   hideErr("scanErr");
-  show("screen-start");
+  show("screen-intro");
 }
 document.getElementById("btnReset1").addEventListener("click",resetAll);
 document.getElementById("btnReset2").addEventListener("click",resetAll);
@@ -864,6 +947,14 @@ if(ENV.isIOS){
   var ih=document.getElementById("iosHelp"); if(ih) ih.classList.remove("hidden");
   if(ENV.inFrame){ var fn=document.getElementById("iosFrameNote"); if(fn) fn.classList.remove("hidden"); }
 }
+// paint the step indicator on each screen (done = before current, active = current)
+Array.prototype.forEach.call(document.querySelectorAll(".flowsteps"),function(fs){
+  var cur=parseInt(fs.getAttribute("data-cur"),10)||1;
+  Array.prototype.forEach.call(fs.children,function(li,i){
+    if(i+1<cur) li.classList.add("done");
+    else if(i+1===cur) li.classList.add("active");
+  });
+});
 updateCalUI();
 drawMap(document.getElementById("skymap"));
 })();
